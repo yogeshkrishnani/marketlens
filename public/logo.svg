@@ -1,0 +1,15 @@
+<svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g>
+        <!-- Diamond outer shape -->
+        <path d="M30 5L50 25L30 45L10 25L30 5Z" stroke="#FD7014" stroke-width="2" fill="none"/>
+
+        <!-- Inner diamond -->
+        <path d="M30 15L40 25L30 35L20 25L30 15Z" stroke="#FD7014" stroke-width="1.5" fill="none"/>
+
+        <!-- Center square -->
+        <rect x="28" y="23" width="4" height="4" fill="#FD7014"/>
+
+        <!-- Bottom pointer - adjusted to fit fully in viewBox -->
+        <path d="M30 40L42 28L44 30L30 44L16 30L18 28L30 40Z" fill="#FD7014"/>
+    </g>
+</svg>
