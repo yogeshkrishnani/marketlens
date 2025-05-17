@@ -1,13 +1,25 @@
 import { Box } from '@mui/material';
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { Header } from './Header';
+
+import { ComparisonDrawer, ComparisonFab } from '@/features/comparison/components/ComparisonDrawer';
 
 interface MainLayoutProps {
   children: ReactNode;
 }
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
+  const [comparisonDrawerOpen, setComparisonDrawerOpen] = useState(false);
+
+  const handleOpenComparisonDrawer = () => {
+    setComparisonDrawerOpen(true);
+  };
+
+  const handleCloseComparisonDrawer = () => {
+    setComparisonDrawerOpen(false);
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Header />
@@ -23,6 +35,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       >
         {children}
       </Box>
+
+      <ComparisonFab onClick={handleOpenComparisonDrawer} />
+      <ComparisonDrawer open={comparisonDrawerOpen} onClose={handleCloseComparisonDrawer} />
     </Box>
   );
 };

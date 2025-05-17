@@ -244,18 +244,35 @@ export const financialApi = api.injectEndpoints({
           : [ApiTagTypes.STOCK_DATA],
       keepUnusedDataFor: 3600, // 1 hour
     }),
+
+    getBatchStockQuotes: builder.query<StockDetailQuote[], string[]>({
+      query: symbols => {
+        return `/quote/${symbols.join(',')}?apikey=${FMP_API_KEY}`;
+      },
+      transformResponse: (response: any[]) => {
+        if (!Array.isArray(response)) {
+          return [];
+        }
+        return response.map(item => transformStockDetailQuote(item));
+      },
+      providesTags: () => [{ type: ApiTagTypes.STOCK_DATA, id: 'batch-quotes' }],
+    }),
   }),
 });
 
 // Export hooks for usage in components
 export const {
-  useGetMarketIndicesQuery,
-  useGetSectorPerformanceQuery,
-  useGetMarketMoversQuery,
-  useSearchStocksQuery,
-  useGetPopularStocksQuery,
-  useGetStockQuoteQuery,
+  useGetBatchStockQuotesQuery,
   useGetCompanyProfileQuery,
   useGetHistoricalPricesQuery,
   useGetKeyMetricsQuery,
+  useGetMarketIndicesQuery,
+  useGetMarketMoversQuery,
+  useGetPopularStocksQuery,
+  useGetSectorPerformanceQuery,
+  useGetStockQuoteQuery,
+  useLazyGetBatchStockQuotesQuery,
+  useLazyGetHistoricalPricesQuery,
+  useLazyGetKeyMetricsQuery,
+  useSearchStocksQuery,
 } = financialApi;

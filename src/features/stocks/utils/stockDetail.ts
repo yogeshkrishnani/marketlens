@@ -1,10 +1,10 @@
 // src/features/stocks/utils/stockDetail.ts
 
 import {
-  StockDetailQuote,
   CompanyProfile,
   HistoricalPrice,
   KeyMetrics,
+  StockDetailQuote,
 } from '../models/stockDetail';
 
 /**

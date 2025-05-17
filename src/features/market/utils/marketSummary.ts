@@ -1,7 +1,6 @@
 // src/features/market/utils/marketSummary.ts
 
-import { MarketIndex } from '../models';
-import { SectorPerformance } from '../models';
+import { MarketIndex, SectorPerformance } from '../models';
 
 export interface MarketSummary {
   marketTrend: 'up' | 'down' | 'neutral';
@@ -42,35 +41,45 @@ export const getMarketSummary = (
   const marketTrend = spIndex.change > 0 ? 'up' : spIndex.change < 0 ? 'down' : 'neutral';
   const trendPercentage = spIndex.changePercent;
 
-  // Find leading sector (highest absolute performance)
-  let leadingSector = '';
-  let leadingPerformance = 0;
+  // Find notable sectors
+  let topPerformingSector = '';
+  let topPerformance = -Infinity;
+  let worstPerformingSector = '';
+  let worstPerformance = Infinity;
 
   if (sectors && sectors.length > 0) {
-    // Sort sectors by absolute performance (highest first)
-    const sortedSectors = [...sectors].sort(
-      (a, b) => Math.abs(b.performance) - Math.abs(a.performance)
-    );
-
-    // Get the sector with highest absolute performance
-    leadingSector = sortedSectors[0].name;
-    leadingPerformance = sortedSectors[0].performance;
+    // Find best and worst performing sectors
+    sectors.forEach(sector => {
+      if (sector.performance > topPerformance) {
+        topPerformance = sector.performance;
+        topPerformingSector = sector.name;
+      }
+      if (sector.performance < worstPerformance) {
+        worstPerformance = sector.performance;
+        worstPerformingSector = sector.name;
+      }
+    });
   }
 
   // Generate summary text
   let summaryText = '';
 
   if (marketTrend === 'up') {
-    summaryText = `Markets up ${Math.abs(trendPercentage).toFixed(2)}% with ${leadingSector} sector leading (${leadingPerformance >= 0 ? '+' : ''}${leadingPerformance.toFixed(2)}%)`;
+    summaryText = `Markets up ${Math.abs(trendPercentage).toFixed(2)}% with ${topPerformingSector} leading (+${topPerformance.toFixed(2)}%)`;
   } else if (marketTrend === 'down') {
-    summaryText = `Markets down ${Math.abs(trendPercentage).toFixed(2)}% with ${leadingSector} sector leading (${leadingPerformance >= 0 ? '+' : ''}${leadingPerformance.toFixed(2)}%)`;
+    // When markets are down, highlight the best performing sector if positive, otherwise the worst hit sector
+    if (topPerformance > 0) {
+      summaryText = `Markets down ${Math.abs(trendPercentage).toFixed(2)}% with ${topPerformingSector} outperforming (+${topPerformance.toFixed(2)}%)`;
+    } else {
+      summaryText = `Markets down ${Math.abs(trendPercentage).toFixed(2)}% with ${worstPerformingSector} hardest hit (${worstPerformance.toFixed(2)}%)`;
+    }
   } else {
     summaryText = 'Markets flat today';
   }
 
   return {
     marketTrend,
-    leadingSector,
+    leadingSector: marketTrend === 'up' ? topPerformingSector : worstPerformingSector,
     trendPercentage,
     summaryText,
     timestamp,

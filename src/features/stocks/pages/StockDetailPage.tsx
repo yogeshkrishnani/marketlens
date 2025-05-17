@@ -1,33 +1,33 @@
-// src/features/stocks/pages/StockDetailPage.tsx
-
+import { ComparisonButton } from '@features/comparison/components/ComparisonButton';
 import { CompanyProfile } from '@features/stocks/components/CompanyProfile';
+import { KeyMetricsTable } from '@features/stocks/components/KeyMetricsTable';
 import { useRecentlyViewedStocks } from '@hooks/useRecentlyViewedStocks';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import {
-  Box,
-  Typography,
-  Paper,
-  Tabs,
-  Tab,
-  Button,
-  CircularProgress,
   Alert,
-  Divider,
+  Box,
+  Button,
   Chip,
+  CircularProgress,
+  Divider,
   Grid,
+  Paper,
+  Tab,
+  Tabs,
+  Typography,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { StockPriceChart } from '../components/StockPriceChart';
 import { Timeframe } from '../models/stockDetail';
-import { formatPrice, formatCompactNumber, formatChange } from '../utils/stockDetail';
+import { formatChange, formatCompactNumber, formatPrice } from '../utils/stockDetail';
 
 import {
-  useGetStockQuoteQuery,
   useGetCompanyProfileQuery,
   useGetHistoricalPricesQuery,
   useGetKeyMetricsQuery,
+  useGetStockQuoteQuery,
 } from '@/services/api/financialApi';
 
 interface TabPanelProps {
@@ -152,6 +152,9 @@ export const StockDetailPage = () => {
                 <Typography variant="subtitle1" color="text.secondary" gutterBottom>
                   {stockQuote.name}
                 </Typography>
+                <Box sx={{ mt: 1 }}>
+                  <ComparisonButton symbol={stockQuote.symbol} name={stockQuote.name} />
+                </Box>
               </Box>
 
               <Box sx={{ textAlign: 'right' }}>
@@ -236,7 +239,6 @@ export const StockDetailPage = () => {
             >
               <Tab label="Overview" id="tab-0" aria-controls="tabpanel-0" />
               <Tab label="Financials" id="tab-1" aria-controls="tabpanel-1" />
-              <Tab label="News" id="tab-2" aria-controls="tabpanel-2" />
             </Tabs>
 
             <Box sx={{ p: 3 }}>
@@ -311,53 +313,14 @@ export const StockDetailPage = () => {
                   ) : metricsError ? (
                     <Alert severity="error">Error loading financial metrics.</Alert>
                   ) : keyMetrics ? (
-                    <Box>
-                      {/* We'll replace this with the KeyMetricsTable component later */}
-                      <Grid container spacing={3}>
-                        <Grid item xs={12} sm={6} md={3}>
-                          <Typography variant="body2" color="text.secondary">
-                            P/E Ratio
-                          </Typography>
-                          <Typography variant="body1" fontWeight={500}>
-                            {keyMetrics.peRatio ? keyMetrics.peRatio.toFixed(2) : 'N/A'}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                          <Typography variant="body2" color="text.secondary">
-                            P/B Ratio
-                          </Typography>
-                          <Typography variant="body1" fontWeight={500}>
-                            {keyMetrics.pbRatio ? keyMetrics.pbRatio.toFixed(2) : 'N/A'}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                          <Typography variant="body2" color="text.secondary">
-                            ROE
-                          </Typography>
-                          <Typography variant="body1" fontWeight={500}>
-                            {keyMetrics.roe ? `${(keyMetrics.roe * 100).toFixed(2)}%` : 'N/A'}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                          <Typography variant="body2" color="text.secondary">
-                            Debt to Equity
-                          </Typography>
-                          <Typography variant="body1" fontWeight={500}>
-                            {keyMetrics.debtToEquity ? keyMetrics.debtToEquity.toFixed(2) : 'N/A'}
-                          </Typography>
-                        </Grid>
-                      </Grid>
-                    </Box>
+                    <KeyMetricsTable
+                      metrics={keyMetrics}
+                      isLoading={isMetricsLoading}
+                      error={metricsError}
+                    />
                   ) : (
                     <Alert severity="info">No financial metrics available.</Alert>
                   )}
-                </Box>
-              </TabPanel>
-
-              <TabPanel value={tabIndex} index={2}>
-                {/* News tab content - to be implemented later */}
-                <Box sx={{ py: 4, textAlign: 'center' }}>
-                  <Typography>News feed will be implemented in a future update.</Typography>
                 </Box>
               </TabPanel>
             </Box>
