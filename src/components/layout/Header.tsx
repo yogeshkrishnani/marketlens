@@ -1,32 +1,35 @@
+// src/components/layout/Header.tsx
+
 import { toggleTheme } from '@features/theme/themeSlice';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import MenuIcon from '@mui/icons-material/Menu';
 import {
   AppBar,
-  Toolbar,
-  Button,
-  IconButton,
   Box,
-  useMediaQuery,
+  Button,
+  Divider,
+  IconButton,
   Menu,
   MenuItem,
+  Toolbar,
+  useMediaQuery,
   useTheme,
-  Divider,
 } from '@mui/material';
 import { useCallback, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
+import { AuthStatus } from '@/features/auth/components/AuthStatus'; // Import the AuthStatus component
+import { useAuth } from '@/features/auth/context/AuthContext';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 
-// Navigation items
+// Navigation items - updated to conditionally require auth
 const navItems = [
-  { label: 'Market Overview', path: '/' },
-  { label: 'Stocks', path: '/stocks' },
-  { label: 'Comparison', path: '/comparison' },
-  { label: 'Portfolio', path: '/portfolio' },
-  { label: 'Watchlists', path: '/watchlists' },
+  { label: 'Market Overview', path: '/', requiresAuth: false },
+  { label: 'Stocks', path: '/stocks', requiresAuth: false },
+  { label: 'Comparison', path: '/comparison', requiresAuth: false },
+  { label: 'Portfolio', path: '/portfolio', requiresAuth: true },
+  { label: 'Watchlists', path: '/watchlists', requiresAuth: true },
 ];
 
 export const Header = () => {
@@ -35,6 +38,7 @@ export const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { mode } = useAppSelector(state => state.theme);
+  const { currentUser } = useAuth(); // Get auth state from context
 
   // Mobile menu state
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(null);
@@ -60,9 +64,14 @@ export const Header = () => {
     dispatch(toggleTheme());
   };
 
+  // Filter nav items based on auth status
+  const filteredNavItems = navItems.filter(
+    item => !item.requiresAuth || (item.requiresAuth && currentUser)
+  );
+
   // Render navigation items
   const renderNavItems = useCallback(() => {
-    return navItems.map(item => {
+    return filteredNavItems.map(item => {
       const isActive =
         location.pathname === item.path ||
         (item.path === '/stocks' && location.pathname.startsWith('/stocks/'));
@@ -87,7 +96,7 @@ export const Header = () => {
         </Button>
       );
     });
-  }, [handleNavigation, location.pathname]);
+  }, [handleNavigation, location.pathname, filteredNavItems]);
 
   return (
     <AppBar
@@ -124,15 +133,10 @@ export const Header = () => {
           {mode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
         </IconButton>
 
-        {/* User Account */}
-        <IconButton
-          color="inherit"
-          onClick={() => handleNavigation('/account')}
-          sx={{ ml: 2 }}
-          size="small"
-        >
-          <AccountCircleIcon fontSize="small" />
-        </IconButton>
+        {/* AuthStatus - Replace User Account button */}
+        <Box sx={{ ml: 2 }}>
+          <AuthStatus />
+        </Box>
 
         {/* Mobile Menu Icon */}
         {isMobile && (
@@ -161,7 +165,7 @@ export const Header = () => {
             },
           }}
         >
-          {navItems.map(item => (
+          {filteredNavItems.map(item => (
             <MenuItem
               key={item.path}
               onClick={() => handleNavigation(item.path)}
