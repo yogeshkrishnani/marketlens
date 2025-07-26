@@ -1,3 +1,4 @@
+import { useAuth } from '@features/auth/context/AuthContext';
 import {
   Add as AddIcon,
   ArrowBack as ArrowBackIcon,
@@ -24,15 +25,14 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { useGetBatchStockQuotesQuery } from '@services/api/financialApi';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { AllocationChart } from '../components/AllocationChart';
 import { Portfolio, PortfolioWithMetrics, Position, PositionWithMarketData } from '../models';
-import { getPortfolioById } from '../services/portfolioService';
+import { getPortfolioById, removePositionFromPortfolio } from '../services/portfolioService';
 
-import { useAuth } from '@/features/auth/context/AuthContext';
-import { useGetBatchStockQuotesQuery } from '@/services/api/financialApi';
 import { financialColors } from '@/theme';
 
 // Portfolio-specific formatting utilities
@@ -116,135 +116,146 @@ interface PositionCardProps {
   readonly position: PositionWithMarketData;
   readonly onEdit: (position: Position) => void;
   readonly onDelete: (positionId: string) => void;
+  readonly isDeleting?: boolean;
 }
 
-const PositionCard: React.FC<PositionCardProps> = React.memo(({ position, onEdit, onDelete }) => {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+const PositionCard: React.FC<PositionCardProps> = React.memo(
+  ({ position, onEdit, onDelete, isDeleting = false }) => {
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  const handleMenuOpen = useCallback((event: React.MouseEvent<HTMLElement>) => {
-    event.stopPropagation();
-    setAnchorEl(event.currentTarget);
-  }, []);
+    const handleMenuOpen = useCallback((event: React.MouseEvent<HTMLElement>) => {
+      event.stopPropagation();
+      setAnchorEl(event.currentTarget);
+    }, []);
 
-  const handleMenuClose = useCallback(() => {
-    setAnchorEl(null);
-  }, []);
+    const handleMenuClose = useCallback(() => {
+      setAnchorEl(null);
+    }, []);
 
-  const handleEdit = useCallback(() => {
-    onEdit(position);
-    handleMenuClose();
-  }, [onEdit, position, handleMenuClose]);
+    const handleEdit = useCallback(() => {
+      onEdit(position);
+      handleMenuClose();
+    }, [onEdit, position, handleMenuClose]);
 
-  const handleDelete = useCallback(() => {
-    onDelete(position.id);
-    handleMenuClose();
-  }, [onDelete, position.id, handleMenuClose]);
+    const handleDelete = useCallback(() => {
+      onDelete(position.id);
+      handleMenuClose();
+    }, [onDelete, position.id, handleMenuClose]);
 
-  const isPositive = position.gainLoss >= 0;
-  const isDayPositive = position.dayChange >= 0;
+    const isPositive = position.gainLoss >= 0;
+    const isDayPositive = position.dayChange >= 0;
 
-  return (
-    <Card
-      sx={{
-        height: '100%',
-        transition: 'all 0.2s',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: 4,
-        },
-      }}
-    >
-      <CardContent>
-        {/* Header */}
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="flex-start"
-          sx={{ mb: 2 }}
-        >
-          <Box>
-            <Typography variant="h6" fontWeight={600}>
-              {position.symbol}
+    return (
+      <Card
+        sx={{
+          height: '100%',
+          transition: 'all 0.2s',
+          opacity: isDeleting ? 0.6 : 1,
+          pointerEvents: isDeleting ? 'none' : 'auto',
+          '&:hover': {
+            transform: isDeleting ? 'none' : 'translateY(-2px)',
+            boxShadow: isDeleting ? 1 : 4,
+          },
+        }}
+      >
+        <CardContent>
+          {/* Header */}
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="flex-start"
+            sx={{ mb: 2 }}
+          >
+            <Box>
+              <Typography variant="h6" fontWeight={600}>
+                {position.symbol}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {position.shares} shares
+              </Typography>
+            </Box>
+
+            {isDeleting ? (
+              <CircularProgress size={20} />
+            ) : (
+              <>
+                <IconButton size="small" onClick={handleMenuOpen}>
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+
+                <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+                  <MenuItem onClick={handleEdit}>Edit Position</MenuItem>
+                  <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+                    Delete Position
+                  </MenuItem>
+                </Menu>
+              </>
+            )}
+          </Stack>
+
+          {/* Current Price */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="h5" fontWeight={600}>
+              {formatPortfolioCurrency(position.currentPrice)}
             </Typography>
+            <Stack direction="row" alignItems="center" spacing={0.5}>
+              {isDayPositive ? (
+                <TrendingUpIcon fontSize="small" sx={{ color: financialColors.positive }} />
+              ) : (
+                <TrendingDownIcon fontSize="small" sx={{ color: financialColors.negative }} />
+              )}
+              <Typography
+                variant="body2"
+                sx={{
+                  color: isDayPositive ? financialColors.positive : financialColors.negative,
+                  fontWeight: 500,
+                }}
+              >
+                {formatPortfolioChange(position.dayChange, position.dayChangePercent)}
+              </Typography>
+            </Stack>
+          </Box>
+
+          <Divider sx={{ my: 2 }} />
+
+          {/* Position Value */}
+          <Box sx={{ mb: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              {position.shares} shares
+              Current Value
+            </Typography>
+            <Typography variant="h6" fontWeight={600}>
+              {formatPortfolioCurrency(position.currentValue)}
             </Typography>
           </Box>
 
-          <IconButton size="small" onClick={handleMenuOpen}>
-            <MoreVertIcon fontSize="small" />
-          </IconButton>
-
-          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-            <MenuItem onClick={handleEdit}>Edit Position</MenuItem>
-            <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
-              Delete Position
-            </MenuItem>
-          </Menu>
-        </Stack>
-
-        {/* Current Price */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="h5" fontWeight={600}>
-            {formatPortfolioCurrency(position.currentPrice)}
-          </Typography>
-          <Stack direction="row" alignItems="center" spacing={0.5}>
-            {isDayPositive ? (
-              <TrendingUpIcon fontSize="small" sx={{ color: financialColors.positive }} />
-            ) : (
-              <TrendingDownIcon fontSize="small" sx={{ color: financialColors.negative }} />
-            )}
+          {/* Gain/Loss */}
+          <Box sx={{ mb: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Total Gain/Loss
+            </Typography>
             <Typography
-              variant="body2"
+              variant="body1"
+              fontWeight={600}
               sx={{
-                color: isDayPositive ? financialColors.positive : financialColors.negative,
-                fontWeight: 500,
+                color: isPositive ? financialColors.positive : financialColors.negative,
               }}
             >
-              {formatPortfolioChange(position.dayChange, position.dayChangePercent)}
+              {formatPortfolioChange(position.gainLoss, position.gainLossPercent)}
             </Typography>
-          </Stack>
-        </Box>
+          </Box>
 
-        <Divider sx={{ my: 2 }} />
-
-        {/* Position Value */}
-        <Box sx={{ mb: 1 }}>
-          <Typography variant="body2" color="text.secondary">
-            Current Value
-          </Typography>
-          <Typography variant="h6" fontWeight={600}>
-            {formatPortfolioCurrency(position.currentValue)}
-          </Typography>
-        </Box>
-
-        {/* Gain/Loss */}
-        <Box sx={{ mb: 1 }}>
-          <Typography variant="body2" color="text.secondary">
-            Total Gain/Loss
-          </Typography>
-          <Typography
-            variant="body1"
-            fontWeight={600}
-            sx={{
-              color: isPositive ? financialColors.positive : financialColors.negative,
-            }}
-          >
-            {formatPortfolioChange(position.gainLoss, position.gainLossPercent)}
-          </Typography>
-        </Box>
-
-        {/* Purchase Info */}
-        <Box>
-          <Typography variant="body2" color="text.secondary">
-            Purchased at {formatPortfolioCurrency(position.purchasePrice)} on{' '}
-            {position.purchaseDate.toLocaleDateString()}
-          </Typography>
-        </Box>
-      </CardContent>
-    </Card>
-  );
-});
+          {/* Purchase Info */}
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              Purchased at {formatPortfolioCurrency(position.purchasePrice)} on{' '}
+              {position.purchaseDate.toLocaleDateString()}
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
+);
 
 // Main Portfolio Detail Page Component
 export const PortfolioDetailPage: React.FC = () => {
@@ -256,6 +267,7 @@ export const PortfolioDetailPage: React.FC = () => {
   const [portfolioMetrics, setPortfolioMetrics] = useState<PortfolioWithMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingPositions, setDeletingPositions] = useState<Set<string>>(new Set());
 
   // Get unique symbols from portfolio positions for batch quote
   const stockSymbols = useMemo(() => {
@@ -387,12 +399,45 @@ export const PortfolioDetailPage: React.FC = () => {
     [navigate, portfolioId]
   );
 
-  const handleDeletePosition = useCallback((positionId: string) => {
-    if (window.confirm('Are you sure you want to delete this position?')) {
-      // TODO: Implement position deletion
-      console.log('Delete position:', positionId);
-    }
-  }, []);
+  const handleDeletePosition = useCallback(
+    async (positionId: string) => {
+      if (!portfolioId) return;
+
+      // Find position for confirmation dialog
+      const position = portfolioData?.positions.find(p => p.id === positionId);
+      const positionSymbol = position?.symbol || 'this position';
+
+      if (
+        !window.confirm(
+          `Are you sure you want to delete ${positionSymbol}? This action cannot be undone.`
+        )
+      ) {
+        return;
+      }
+
+      // Add to deleting set
+      setDeletingPositions(prev => new Set(prev).add(positionId));
+
+      try {
+        await removePositionFromPortfolio(portfolioId, positionId);
+
+        // Reload portfolio data to reflect changes
+        await loadPortfolio();
+      } catch (err) {
+        console.error('Failed to delete position:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Failed to delete position';
+        setError(errorMessage);
+      } finally {
+        // Remove from deleting set
+        setDeletingPositions(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(positionId);
+          return newSet;
+        });
+      }
+    },
+    [portfolioId, portfolioData?.positions, loadPortfolio]
+  );
 
   const handleRefresh = useCallback(() => {
     // Refetch stock prices using RTK Query
@@ -452,7 +497,7 @@ export const PortfolioDetailPage: React.FC = () => {
 
   return (
     <>
-      <Box sx={{ py: 3 }}>
+      <Box sx={{ py: 4 }}>
         {/* Header */}
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 4 }}>
           <Stack direction="row" alignItems="center" spacing={2}>
@@ -696,6 +741,7 @@ export const PortfolioDetailPage: React.FC = () => {
                     position={position}
                     onEdit={handleEditPosition}
                     onDelete={handleDeletePosition}
+                    isDeleting={deletingPositions.has(position.id)}
                   />
                 </Grid>
               ))}

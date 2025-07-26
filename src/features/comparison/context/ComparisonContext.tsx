@@ -27,13 +27,7 @@ const CHART_COLORS = ['#2196f3', '#f44336', '#4caf50', '#ff9800'];
 
 // Create the provider component
 export const ComparisonProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [comparisonList, setComparisonList] = useState<ComparisonStock[]>([
-    { symbol: 'AAPL', name: 'Apple' },
-    {
-      symbol: 'MSFT',
-      name: 'Microsoft',
-    },
-  ]);
+  const [comparisonList, setComparisonList] = useState<ComparisonStock[]>([]);
 
   // Initialize from localStorage on mount
   useEffect(() => {
