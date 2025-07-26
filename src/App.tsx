@@ -15,10 +15,17 @@ import { AuthProvider } from '@/features/auth/context/AuthContext';
 import { ForgotPasswordPage } from '@/features/auth/pages/ForgotPasswordPage';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { RegisterPage } from '@/features/auth/pages/RegisterPage';
+import { PortfolioDetailPage } from '@/features/portfolio/components/PortfolioDetailPage';
+import { PortfolioForm } from '@/features/portfolio/components/PortfolioForm';
+import { PortfolioList } from '@/features/portfolio/components/PortfolioList';
+import { PortfolioProvider } from '@/features/portfolio/context/PortfolioContext';
+import { AddPositionPage } from '@/features/portfolio/pages/AddPositionPage';
 import { StockDetailPage } from '@/features/stocks/pages/StockDetailPage';
 import { StocksPage } from '@/features/stocks/pages/StocksPage';
 import { useAppSelector } from '@/hooks';
 import { createAppTheme } from '@/theme';
+
+// Portfolio imports
 
 export const App = () => {
   // Get the current theme mode from Redux store
@@ -33,53 +40,89 @@ export const App = () => {
       <CssBaseline />
       <AuthProvider>
         <UserProvider>
-          <BrowserRouter>
-            <ComparisonProvider>
-              <MainLayout>
-                <Routes>
-                  {/* Public routes */}
-                  <Route path="/" element={<MarketOverview />} />
-                  <Route path="/stocks" element={<StocksPage />} />
-                  <Route path="/stocks/:symbol" element={<StockDetailPage />} />
-                  <Route path="/comparison" element={<ComparisonPage />} />
+          <PortfolioProvider>
+            <BrowserRouter>
+              <ComparisonProvider>
+                <MainLayout>
+                  <Routes>
+                    {/* Public routes */}
+                    <Route path="/" element={<MarketOverview />} />
+                    <Route path="/stocks" element={<StocksPage />} />
+                    <Route path="/stocks/:symbol" element={<StockDetailPage />} />
+                    <Route path="/comparison" element={<ComparisonPage />} />
 
-                  {/* Authentication routes */}
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
-                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                    {/* Authentication routes */}
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-                  {/* Protected routes - require authentication */}
-                  <Route
-                    path="/portfolio"
-                    element={
-                      <ProtectedRoute>
-                        <div>Portfolio (coming soon)</div>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/watchlists"
-                    element={
-                      <ProtectedRoute>
-                        <div>Watchlists (coming soon)</div>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/account"
-                    element={
-                      <ProtectedRoute>
-                        <AccountPage />
-                      </ProtectedRoute>
-                    }
-                  />
+                    {/* Protected portfolio routes */}
+                    <Route
+                      path="/portfolio"
+                      element={
+                        <ProtectedRoute>
+                          <PortfolioList />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/portfolio/create"
+                      element={
+                        <ProtectedRoute>
+                          <PortfolioForm />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/portfolio/:id"
+                      element={
+                        <ProtectedRoute>
+                          <PortfolioDetailPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/portfolio/:id/add-position"
+                      element={
+                        <ProtectedRoute>
+                          <AddPositionPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/portfolio/:id/edit"
+                      element={
+                        <ProtectedRoute>
+                          <div>Edit Portfolio (coming soon)</div>
+                        </ProtectedRoute>
+                      }
+                    />
 
-                  {/* Fallback route */}
-                  <Route path="*" element={<div>Page not found</div>} />
-                </Routes>
-              </MainLayout>
-            </ComparisonProvider>
-          </BrowserRouter>
+                    {/* Other protected routes */}
+                    <Route
+                      path="/watchlists"
+                      element={
+                        <ProtectedRoute>
+                          <div>Watchlists (coming soon)</div>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/account"
+                      element={
+                        <ProtectedRoute>
+                          <AccountPage />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Fallback route */}
+                    <Route path="*" element={<div>Page not found</div>} />
+                  </Routes>
+                </MainLayout>
+              </ComparisonProvider>
+            </BrowserRouter>
+          </PortfolioProvider>
         </UserProvider>
       </AuthProvider>
     </ThemeProvider>

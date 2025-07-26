@@ -3,17 +3,17 @@
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import SearchIcon from '@mui/icons-material/Search';
 import {
-  Autocomplete,
-  TextField,
-  InputAdornment,
-  CircularProgress,
-  Box,
-  Typography,
-  Avatar,
-  Tooltip,
   Alert,
+  Autocomplete,
+  Avatar,
+  Box,
+  CircularProgress,
+  InputAdornment,
+  TextField,
+  Tooltip,
+  Typography,
 } from '@mui/material';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { StockSearchResult } from '../models';
@@ -37,7 +37,6 @@ export const StockSearch: React.FC<StockSearchProps> = ({
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
-  const [selectedStock, setSelectedStock] = useState<StockSearchResult | null>(null);
 
   // Debounce search input to prevent excessive API calls
   const debouncedSearchTerm = useDebounce(inputValue, 300);
@@ -78,7 +77,6 @@ export const StockSearch: React.FC<StockSearchProps> = ({
   // Handle selection of a stock
   const handleStockSelection = (_: React.SyntheticEvent, stock: StockSearchResult | null) => {
     if (stock) {
-      setSelectedStock(stock);
       console.log('Selected stock:', stock); // Add console log for debugging
       navigate(`/stocks/${stock.symbol}`);
     }
