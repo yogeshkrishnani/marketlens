@@ -1,54 +1,36 @@
-# React + TypeScript + Vite
+# 📈 MarketLens - Stock Portfolio Tracker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> A full-stack React application demonstrating modern web development practices with real-time financial data integration.
 
-Currently, two official plugins are available:
+## ✨ Key Features Demonstrated
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **🔥 Real-time Data**: Live stock prices with RTK Query caching
+- **🔐 Authentication**: Firebase Auth with Google OAuth + email/password
+- **📊 Data Visualization**: ApexCharts integration with responsive design
+- **🎯 State Management**: Redux Toolkit with TypeScript
+- **📱 Responsive UI**: Material-UI with custom theming
+- **🔄 CRUD Operations**: Portfolio and watchlist management
+- **⚡ Performance**: Code splitting, lazy loading, optimized builds
 
-## Expanding the ESLint configuration
+## 🛠 Technical Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+| Category | Technology | Why Chosen |
+|----------|------------|------------|
+| Frontend | React 18 + TypeScript | Type safety, modern React features |
+| State | Redux Toolkit + RTK Query | Predictable state, automatic caching |
+| UI | Material-UI v5 | Professional design system |
+| Backend | Firebase (Auth + Firestore) | Real-time database, easy auth |
+| Charts | ApexCharts | Financial chart requirements |
+| Build | Vite | Fast development, optimized builds |
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+## 🎥 Live Demo
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+**[View Live Application →](https://marketlens-demo.web.app)**
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+*Demo Account: demo@marketlens.app / password123*
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+## 📱 Screenshots
+
+| Desktop View | Mobile View |
+|--------------|-------------|
+| ![Desktop](screenshots/desktop.png) | ![Mobile](screenshots/mobile.png) |
