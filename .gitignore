@@ -32,3 +32,6 @@ tsconfig.tsbuildinfo
 *.njsproj
 *.sln
 *.sw?
+
+# Firebase CLI cache
+.firebase/
