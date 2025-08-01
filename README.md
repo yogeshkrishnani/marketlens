@@ -26,11 +26,3 @@
 ## 🎥 Live Demo
 
 **[View Live Application →](https://marketlens-demo.web.app)**
-
-*Demo Account: demo@marketlens.app / password123*
-
-## 📱 Screenshots
-
-| Desktop View | Mobile View |
-|--------------|-------------|
-| ![Desktop](screenshots/desktop.png) | ![Mobile](screenshots/mobile.png) |
