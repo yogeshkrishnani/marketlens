@@ -30,9 +30,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { AllocationChart } from '../components/AllocationChart';
-import { Portfolio, PortfolioWithMetrics, Position, PositionWithMarketData } from '../models';
+import { Portfolio, Position, PositionWithMarketData } from '../models';
 import { getPortfolioById, removePositionFromPortfolio } from '../services/portfolioService';
 
+import { usePortfolioMetrics } from '@/hooks/usePortfolioMetrics';
 import { financialColors } from '@/theme';
 
 const formatPortfolioCurrency = (value: number): string => {
@@ -59,52 +60,6 @@ const formatPortfolioChange = (change: number, changePercent: number): string =>
 const formatPercentage = (value: number): string => {
   const sign = value >= 0 ? '+' : '';
   return `${sign}${value.toFixed(2)}%`;
-};
-
-const calculatePositionMetrics = (
-  position: Position,
-  currentPrice: number,
-  dayChange: number,
-  dayChangePercent: number
-): PositionWithMarketData => {
-  const currentValue = position.shares * currentPrice;
-  const costBasis = position.shares * position.purchasePrice;
-  const gainLoss = currentValue - costBasis;
-  const gainLossPercent = (gainLoss / costBasis) * 100;
-
-  return {
-    ...position,
-    currentPrice,
-    currentValue,
-    costBasis,
-    gainLoss,
-    gainLossPercent,
-    dayChange: position.shares * dayChange,
-    dayChangePercent,
-  };
-};
-
-const calculatePortfolioMetrics = (
-  portfolio: Portfolio,
-  positionsWithMarketData: PositionWithMarketData[]
-): PortfolioWithMetrics => {
-  const totalValue = positionsWithMarketData.reduce((sum, pos) => sum + pos.currentValue, 0);
-  const totalCostBasis = positionsWithMarketData.reduce((sum, pos) => sum + pos.costBasis, 0);
-  const totalGainLoss = totalValue - totalCostBasis;
-  const totalGainLossPercent = totalCostBasis > 0 ? (totalGainLoss / totalCostBasis) * 100 : 0;
-  const dayChange = positionsWithMarketData.reduce((sum, pos) => sum + pos.dayChange, 0);
-  const dayChangePercent = totalValue > 0 ? (dayChange / (totalValue - dayChange)) * 100 : 0;
-
-  return {
-    ...portfolio,
-    totalValue,
-    totalCostBasis,
-    totalGainLoss,
-    totalGainLossPercent,
-    dayChange,
-    dayChangePercent,
-    positionsWithMarketData,
-  };
 };
 
 interface PositionCardProps {
@@ -259,7 +214,6 @@ export const PortfolioDetailPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [portfolioData, setPortfolioData] = useState<Portfolio | null>(null);
-  const [portfolioMetrics, setPortfolioMetrics] = useState<PortfolioWithMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingPositions, setDeletingPositions] = useState<Set<string>>(new Set());
@@ -281,62 +235,7 @@ export const PortfolioDetailPage: React.FC = () => {
     pollingInterval: 30000, // Auto-refresh every 30 seconds
   });
 
-  // Calculate portfolio metrics when portfolio data or stock quotes change
-  useEffect(() => {
-    if (!portfolioData) return;
-
-    try {
-      // If no positions, set empty metrics
-      if (portfolioData.positions.length === 0) {
-        setPortfolioMetrics({
-          ...portfolioData,
-          totalValue: 0,
-          totalCostBasis: 0,
-          totalGainLoss: 0,
-          totalGainLossPercent: 0,
-          dayChange: 0,
-          dayChangePercent: 0,
-          positionsWithMarketData: [],
-        });
-        return;
-      }
-
-      // Create quotes lookup from real RTK Query API data
-      const quotesLookup: Record<string, any> = {};
-      if (stockQuotes && stockQuotes.length > 0) {
-        stockQuotes.forEach(quote => {
-          quotesLookup[quote.symbol] = {
-            price: quote.price,
-            change: quote.change,
-            changePercent: quote.changePercent,
-          };
-        });
-      }
-
-      // Calculate position metrics with real market data
-      const positionsWithMarketData = portfolioData.positions.map(position => {
-        const quote = quotesLookup[position.symbol];
-        if (quote) {
-          return calculatePositionMetrics(position, quote.price, quote.change, quote.changePercent);
-        } else {
-          // Fallback to purchase price if no real-time quote available
-          return calculatePositionMetrics(position, position.purchasePrice, 0, 0);
-        }
-      });
-
-      // Calculate portfolio metrics with real data
-      const metrics = calculatePortfolioMetrics(portfolioData, positionsWithMarketData);
-      setPortfolioMetrics(metrics);
-    } catch (err) {
-      console.error('Failed to calculate portfolio metrics:', err);
-      // Set portfolio with fallback data (purchase prices)
-      const positionsWithMarketData = portfolioData.positions.map(position =>
-        calculatePositionMetrics(position, position.purchasePrice, 0, 0)
-      );
-      const metrics = calculatePortfolioMetrics(portfolioData, positionsWithMarketData);
-      setPortfolioMetrics(metrics);
-    }
-  }, [portfolioData, stockQuotes]);
+  const portfolioMetrics = usePortfolioMetrics(portfolioData, stockQuotes);
 
   // Load portfolio data
   const loadPortfolio = useCallback(async () => {

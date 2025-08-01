@@ -52,13 +52,9 @@ export const StockSearch: React.FC<StockSearchProps> = ({
   useEffect(() => {
     if (inputValue.trim() === '') {
       setProcessedResults([]);
-    }
-
-    else if (debouncedSearchTerm !== inputValue.trim()) {
+    } else if (debouncedSearchTerm !== inputValue.trim()) {
       setProcessedResults([]);
-    }
-
-    else if (searchResults && debouncedSearchTerm === inputValue.trim()) {
+    } else if (searchResults && debouncedSearchTerm === inputValue.trim()) {
       setProcessedResults(searchResults);
     }
   }, [searchResults, inputValue, debouncedSearchTerm]);

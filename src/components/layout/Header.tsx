@@ -14,7 +14,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { useCallback, useState } from 'react';
+import { MouseEvent, useCallback, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { AuthStatus } from '@/features/auth/components/AuthStatus';
@@ -43,7 +43,7 @@ export const Header = () => {
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(null);
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+  const handleMobileMenuOpen = (event: MouseEvent<HTMLElement>) => {
     setMobileMenuAnchor(event.currentTarget);
   };
 
@@ -51,10 +51,13 @@ export const Header = () => {
     setMobileMenuAnchor(null);
   };
 
-  const handleNavigation = (path: string) => {
-    navigate(path);
-    handleMobileMenuClose();
-  };
+  const handleNavigation = useCallback(
+    (path: string) => {
+      navigate(path);
+      handleMobileMenuClose();
+    },
+    [navigate]
+  );
 
   const handleThemeToggle = () => {
     dispatch(toggleTheme());
@@ -143,11 +146,13 @@ export const Header = () => {
           anchorEl={mobileMenuAnchor}
           open={Boolean(mobileMenuAnchor)}
           onClose={handleMobileMenuClose}
-          PaperProps={{
-            elevation: 2,
-            sx: {
-              minWidth: 180,
-              mt: 1,
+          slotProps={{
+            paper: {
+              elevation: 2,
+              sx: {
+                minWidth: 180,
+                mt: 1,
+              },
             },
           }}
         >

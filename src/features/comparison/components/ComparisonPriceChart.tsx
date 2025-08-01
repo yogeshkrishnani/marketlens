@@ -119,12 +119,12 @@ export const ComparisonPriceChart: React.FC<ComparisonPriceChartProps> = ({
           },
         },
       },
-              xaxis: {
-          type: 'datetime',
-          labels: {
-            datetimeUTC: false,
-            formatter: function (value: string, timestamp?: number) {
-              const date = new Date(timestamp || Number(value));
+      xaxis: {
+        type: 'datetime',
+        labels: {
+          datetimeUTC: false,
+          formatter: function (value: string, timestamp?: number) {
+            const date = new Date(timestamp || Number(value));
 
             if (timeframe === '1D') {
               return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });

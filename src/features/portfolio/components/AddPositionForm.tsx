@@ -16,8 +16,10 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { Formik, Form, Field } from 'formik';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import * as Yup from 'yup';
 
 import { CreatePositionData } from '../models';
 import { addPositionToPortfolio, getPortfolioById } from '../services/portfolioService';
@@ -25,17 +27,12 @@ import { addPositionToPortfolio, getPortfolioById } from '../services/portfolioS
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useGetStockQuoteQuery } from '@/services/api/financialApi';
 
-// Form validation interface
-interface FormErrors {
-  symbol?: string;
-  shares?: string;
-  purchasePrice?: string;
-  purchaseDate?: string;
-  notes?: string;
+interface AddPositionFormProps {
+  readonly onSuccess?: () => void;
+  readonly onCancel?: () => void;
 }
 
-// Form data interface
-interface FormData {
+interface FormValues {
   symbol: string;
   shares: string;
   purchasePrice: string;
@@ -43,13 +40,41 @@ interface FormData {
   notes: string;
 }
 
-// Component props interface
-interface AddPositionFormProps {
-  readonly onSuccess?: () => void;
-  readonly onCancel?: () => void;
-}
+const validationSchema = Yup.object({
+  symbol: Yup.string()
+    .required('Stock symbol is required')
+    .matches(/^[A-Za-z]{1,5}$/, 'Please enter a valid stock symbol (1-5 letters)'),
+  shares: Yup.string()
+    .required('Number of shares is required')
+    .test('is-positive-number', 'Shares must be a positive number', value => {
+      const shares = parseFloat(value);
+      return !isNaN(shares) && shares > 0;
+    })
+    .test('max-shares', 'Shares cannot exceed 1,000,000', value => {
+      const shares = parseFloat(value);
+      return !isNaN(shares) && shares <= 1000000;
+    }),
+  purchasePrice: Yup.string()
+    .required('Purchase price is required')
+    .test('is-positive-number', 'Purchase price must be a positive number', value => {
+      const price = parseFloat(value);
+      return !isNaN(price) && price > 0;
+    })
+    .test('max-price', 'Purchase price cannot exceed $100,000', value => {
+      const price = parseFloat(value);
+      return !isNaN(price) && price <= 100000;
+    }),
+  purchaseDate: Yup.date()
+    .required('Purchase date is required')
+    .max(new Date(), 'Purchase date cannot be in the future')
+    .test('not-too-old', 'Purchase date cannot be more than 50 years ago', value => {
+      const fiftyYearsAgo = new Date();
+      fiftyYearsAgo.setFullYear(fiftyYearsAgo.getFullYear() - 50);
+      return value >= fiftyYearsAgo;
+    }),
+  notes: Yup.string(),
+});
 
-// Format currency for display
 const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -62,25 +87,11 @@ export const AddPositionForm: React.FC<AddPositionFormProps> = ({ onSuccess, onC
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  // Form state
-  const [formData, setFormData] = useState<FormData>({
-    symbol: '',
-    shares: '',
-    purchasePrice: '',
-    purchaseDate: new Date().toISOString().split('T')[0], // Today's date
-    notes: '',
-  });
-
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [portfolioName, setPortfolioName] = useState<string>('');
   const [isLoadingPortfolio, setIsLoadingPortfolio] = useState(true);
-
-  // Current price state - track which symbol to fetch
   const [priceSymbol, setPriceSymbol] = useState<string>('');
 
-  // Use RTK Query to fetch stock quote
   const {
     data: stockQuote,
     isLoading: isFetchingPrice,
@@ -89,7 +100,6 @@ export const AddPositionForm: React.FC<AddPositionFormProps> = ({ onSuccess, onC
     skip: !priceSymbol || priceSymbol.length < 1,
   });
 
-  // Load portfolio info on mount
   useEffect(() => {
     const loadPortfolio = async () => {
       if (!portfolioId) {
@@ -105,7 +115,6 @@ export const AddPositionForm: React.FC<AddPositionFormProps> = ({ onSuccess, onC
           return;
         }
 
-        // Verify ownership
         if (portfolio.userId !== currentUser?.uid) {
           setError('You do not have permission to add positions to this portfolio');
           return;
@@ -125,178 +134,46 @@ export const AddPositionForm: React.FC<AddPositionFormProps> = ({ onSuccess, onC
     })();
   }, [portfolioId, currentUser?.uid]);
 
-  // Handle get current price button click
-  const handleGetCurrentPrice = useCallback(() => {
-    if (formData.symbol.trim()) {
-      setPriceSymbol(formData.symbol.trim().toUpperCase());
+  const handleGetCurrentPrice = useCallback((symbol: string) => {
+    if (symbol.trim()) {
+      setPriceSymbol(symbol.trim().toUpperCase());
     }
-  }, [formData.symbol]);
+  }, []);
 
-  // Check if current displayed quote matches the current symbol
   const isQuoteValid = stockQuote && priceSymbol && stockQuote.symbol === priceSymbol;
 
-  // Handle use current price button click
-  const handleUseCurrentPrice = useCallback(() => {
-    if (isQuoteValid) {
-      setFormData(prev => ({
-        ...prev,
-        purchasePrice: stockQuote.price.toFixed(2),
-      }));
-
-      // Clear purchase price error if it exists
-      if (formErrors.purchasePrice) {
-        setFormErrors(prev => ({
-          ...prev,
-          purchasePrice: undefined,
-        }));
+  const handleUseCurrentPrice = useCallback(
+    (setFieldValue: (field: string, value: any) => void) => {
+      if (isQuoteValid) {
+        setFieldValue('purchasePrice', stockQuote.price.toFixed(2));
       }
-    }
-  }, [isQuoteValid, formErrors.purchasePrice, stockQuote?.price]);
+    },
+    [isQuoteValid, stockQuote?.price]
+  );
 
-  // Clear price data when symbol changes
   const clearPriceData = useCallback(() => {
     setPriceSymbol('');
   }, []);
 
-  // Validate form data
-  const validateForm = useCallback((data: FormData): FormErrors => {
-    const errors: FormErrors = {};
-
-    // Symbol validation
-    if (!data.symbol.trim()) {
-      errors.symbol = 'Stock symbol is required';
-    } else if (!/^[A-Za-z]{1,5}$/.test(data.symbol.trim())) {
-      errors.symbol = 'Please enter a valid stock symbol (1-5 letters)';
-    }
-
-    // Shares validation
-    if (!data.shares.trim()) {
-      errors.shares = 'Number of shares is required';
-    } else {
-      const shares = parseFloat(data.shares);
-      if (isNaN(shares) || shares <= 0) {
-        errors.shares = 'Shares must be a positive number';
-      } else if (shares > 1000000) {
-        errors.shares = 'Shares cannot exceed 1,000,000';
-      }
-    }
-
-    // Purchase price validation
-    if (!data.purchasePrice.trim()) {
-      errors.purchasePrice = 'Purchase price is required';
-    } else {
-      const price = parseFloat(data.purchasePrice);
-      if (isNaN(price) || price <= 0) {
-        errors.purchasePrice = 'Purchase price must be a positive number';
-      } else if (price > 100000) {
-        errors.purchasePrice = 'Purchase price cannot exceed $100,000';
-      }
-    }
-
-    // Purchase date validation
-    if (!data.purchaseDate) {
-      errors.purchaseDate = 'Purchase date is required';
-    } else {
-      const purchaseDate = new Date(data.purchaseDate);
-      const today = new Date();
-      today.setHours(23, 59, 59, 999); // End of today
-
-      if (purchaseDate > today) {
-        errors.purchaseDate = 'Purchase date cannot be in the future';
-      }
-
-      // Check if date is too old (more than 50 years ago)
-      const fiftyYearsAgo = new Date();
-      fiftyYearsAgo.setFullYear(fiftyYearsAgo.getFullYear() - 50);
-      if (purchaseDate < fiftyYearsAgo) {
-        errors.purchaseDate = 'Purchase date cannot be more than 50 years ago';
-      }
-    }
-
-    return errors;
-  }, []);
-
-  // Handle input changes
-  const handleInputChange = useCallback(
-    (field: keyof FormData) => {
-      return (event: React.ChangeEvent<HTMLInputElement>) => {
-        let value = event.target.value;
-
-        // Special handling for symbol field (uppercase)
-        if (field === 'symbol') {
-          value = value.toUpperCase().replace(/[^A-Z]/g, ''); // Only letters, uppercase
-          // Clear current price when symbol changes
-          clearPriceData();
-        }
-
-        // Special handling for numeric fields
-        if (field === 'shares' || field === 'purchasePrice') {
-          // Allow only numbers and decimal point
-          value = value.replace(/[^0-9.]/g, '');
-          // Prevent multiple decimal points
-          const parts = value.split('.');
-          if (parts.length > 2) {
-            value = parts[0] + '.' + parts.slice(1).join('');
-          }
-        }
-
-        setFormData(prev => ({
-          ...prev,
-          [field]: value,
-        }));
-
-        // Clear field error when user starts typing
-        if (formErrors[field]) {
-          setFormErrors(prev => ({
-            ...prev,
-            [field]: undefined,
-          }));
-        }
-
-        // Clear global error
-        if (error) {
-          setError(null);
-        }
-      };
-    },
-    [formErrors, error, clearPriceData]
-  );
-
-  // Handle form submission
   const handleSubmit = useCallback(
-    async (event: React.FormEvent) => {
-      event.preventDefault();
-
-      if (!portfolioId) {
-        setError('Portfolio ID not available');
+    async (values: FormValues, { setSubmitting }: any) => {
+      if (!portfolioId || !currentUser?.uid) {
+        setError('You must be logged in to add positions');
+        setSubmitting(false);
         return;
       }
-
-      // Validate form
-      const errors = validateForm(formData);
-      setFormErrors(errors);
-
-      if (Object.keys(errors).length > 0) {
-        return;
-      }
-
-      setIsSubmitting(true);
-      setError(null);
 
       try {
-        // Create position data
         const positionData: CreatePositionData = {
-          symbol: formData.symbol.trim().toUpperCase(),
-          shares: parseFloat(formData.shares),
-          purchasePrice: parseFloat(formData.purchasePrice),
-          purchaseDate: new Date(formData.purchaseDate),
-          notes: formData.notes.trim() || undefined,
+          symbol: values.symbol.trim().toUpperCase(),
+          shares: parseFloat(values.shares),
+          purchasePrice: parseFloat(values.purchasePrice),
+          purchaseDate: new Date(values.purchaseDate),
+          notes: values.notes.trim() || undefined,
         };
 
-        // Add position to portfolio
         await addPositionToPortfolio(portfolioId, positionData);
 
-        // Success - navigate back to portfolio detail
         if (onSuccess) {
           onSuccess();
         } else {
@@ -306,13 +183,12 @@ export const AddPositionForm: React.FC<AddPositionFormProps> = ({ onSuccess, onC
         const errorMessage = err instanceof Error ? err.message : 'Failed to add position';
         setError(errorMessage);
       } finally {
-        setIsSubmitting(false);
+        setSubmitting(false);
       }
     },
-    [portfolioId, validateForm, formData, onSuccess, navigate]
+    [portfolioId, currentUser?.uid, onSuccess, navigate]
   );
 
-  // Handle cancel action
   const handleCancel = useCallback(() => {
     if (onCancel) {
       onCancel();
@@ -321,14 +197,6 @@ export const AddPositionForm: React.FC<AddPositionFormProps> = ({ onSuccess, onC
     }
   }, [onCancel, navigate, portfolioId]);
 
-  // Check if form has changes
-  const hasChanges =
-    formData.symbol.trim() ||
-    formData.shares.trim() ||
-    formData.purchasePrice.trim() ||
-    formData.notes.trim();
-
-  // Get price error message for display
   const getPriceErrorMessage = useCallback(() => {
     if (!priceError) return null;
 
@@ -336,21 +204,19 @@ export const AddPositionForm: React.FC<AddPositionFormProps> = ({ onSuccess, onC
       return priceError;
     }
 
-    // Handle RTK Query error format
     if ('data' in priceError && priceError.data) {
       return typeof priceError.data === 'string'
         ? priceError.data
-        : `"${formData.symbol}" is not a valid stock symbol`;
+        : `"${priceSymbol}" is not a valid stock symbol`;
     }
 
     if ('message' in priceError && priceError.message) {
-      // Convert technical errors to user-friendly messages
       const message = priceError.message;
       if (
         message.includes('Invalid response format') ||
         message.includes('Invalid stock quote data')
       ) {
-        return `"${formData.symbol}" is not a valid stock symbol. Please check the spelling and try again.`;
+        return `"${priceSymbol}" is not a valid stock symbol. Please check the spelling and try again.`;
       }
       if (message.includes('Failed to fetch')) {
         return `Unable to connect to market data. Please check your internet connection and try again.`;
@@ -358,11 +224,10 @@ export const AddPositionForm: React.FC<AddPositionFormProps> = ({ onSuccess, onC
       return message;
     }
 
-    // Handle different error status codes
     if ('status' in priceError) {
       switch (priceError.status) {
         case 404:
-          return `Stock symbol "${formData.symbol}" not found. Please verify the symbol is correct.`;
+          return `Stock symbol "${priceSymbol}" not found. Please verify the symbol is correct.`;
         case 429:
           return `Too many requests. Please wait a moment and try again.`;
         case 500:
@@ -370,15 +235,13 @@ export const AddPositionForm: React.FC<AddPositionFormProps> = ({ onSuccess, onC
         case 503:
           return `Market data service is temporarily unavailable. Please try again in a few moments.`;
         default:
-          return `Unable to fetch price for "${formData.symbol}". Please verify the stock symbol and try again.`;
+          return `Unable to fetch price for "${priceSymbol}". Please verify the stock symbol and try again.`;
       }
     }
 
-    // Default fallback
-    return `"${formData.symbol}" appears to be an invalid stock symbol. Please check the spelling and try again.`;
-  }, [priceError, formData.symbol]);
+    return `"${priceSymbol}" appears to be an invalid stock symbol. Please check the spelling and try again.`;
+  }, [priceError, priceSymbol]);
 
-  // Loading state
   if (isLoadingPortfolio) {
     return (
       <Box
@@ -394,7 +257,6 @@ export const AddPositionForm: React.FC<AddPositionFormProps> = ({ onSuccess, onC
     );
   }
 
-  // Error state
   if (error && !portfolioName) {
     return (
       <Container maxWidth="md">
@@ -409,6 +271,14 @@ export const AddPositionForm: React.FC<AddPositionFormProps> = ({ onSuccess, onC
       </Container>
     );
   }
+
+  const initialValues: FormValues = {
+    symbol: '',
+    shares: '',
+    purchasePrice: '',
+    purchaseDate: new Date().toISOString().split('T')[0],
+    notes: '',
+  };
 
   return (
     <Container maxWidth="md">
@@ -435,187 +305,250 @@ export const AddPositionForm: React.FC<AddPositionFormProps> = ({ onSuccess, onC
 
         {/* Form */}
         <Paper sx={{ p: 4 }}>
-          <form onSubmit={handleSubmit}>
-            <Stack spacing={3}>
-              {/* Global error message */}
-              {error && (
-                <Alert severity="error" onClose={() => setError(null)}>
-                  {error}
-                </Alert>
-              )}
+          <Formik
+            initialValues={initialValues}
+            validationSchema={validationSchema}
+            onSubmit={handleSubmit}
+          >
+            {({ values, isSubmitting, setFieldValue, errors, touched }) => (
+              <Form>
+                <Stack spacing={3}>
+                  {/* Global error message */}
+                  {error && (
+                    <Alert severity="error" onClose={() => setError(null)}>
+                      {error}
+                    </Alert>
+                  )}
 
-              {/* Stock Symbol */}
-              <Stack spacing={2}>
-                <Box sx={{ position: 'relative' }}>
-                  <Stack direction="row" spacing={1}>
-                    <TextField
-                      label="Stock Symbol"
-                      placeholder="e.g., AAPL, GOOGL, MSFT"
-                      value={formData.symbol}
-                      onChange={handleInputChange('symbol')}
-                      error={Boolean(formErrors.symbol)}
-                      helperText={formErrors.symbol || 'Enter the ticker symbol of the stock'}
-                      required
-                      fullWidth
-                      autoFocus
-                      disabled={isSubmitting}
-                      inputProps={{ maxLength: 5 }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SearchIcon />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
+                  {/* Stock Symbol */}
+                  <Stack spacing={2}>
+                    <Box sx={{ position: 'relative' }}>
+                      <Stack direction="row" spacing={1}>
+                        <Field name="symbol">
+                          {({ field }: any) => (
+                            <TextField
+                              {...field}
+                              label="Stock Symbol"
+                              placeholder="e.g., AAPL, GOOGL, MSFT"
+                              error={touched.symbol && Boolean(errors.symbol)}
+                              helperText={
+                                touched.symbol && errors.symbol
+                                  ? errors.symbol
+                                  : 'Enter the ticker symbol of the stock'
+                              }
+                              required
+                              fullWidth
+                              autoFocus
+                              disabled={isSubmitting}
+                              inputProps={{ maxLength: 5 }}
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <SearchIcon />
+                                  </InputAdornment>
+                                ),
+                              }}
+                              onChange={e => {
+                                const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+                                field.onChange(e);
+                                setFieldValue('symbol', value);
+                                clearPriceData();
+                              }}
+                            />
+                          )}
+                        </Field>
+                        <Button
+                          variant="outlined"
+                          onClick={() => handleGetCurrentPrice(values.symbol)}
+                          disabled={!values.symbol.trim() || isFetchingPrice || isSubmitting}
+                          startIcon={
+                            isFetchingPrice ? <CircularProgress size={16} /> : <RefreshIcon />
+                          }
+                          sx={{
+                            minWidth: 140,
+                            flexShrink: 0,
+                            alignSelf: 'flex-start',
+                            mt: '16px', // Align with input field (accounting for label)
+                            height: '56px', // Standard input height
+                          }}
+                        >
+                          {isFetchingPrice ? 'Getting...' : 'Get Price'}
+                        </Button>
+                      </Stack>
+                    </Box>
+
+                    {/* Current Price Display */}
+                    {isQuoteValid && (
+                      <Alert
+                        severity="info"
+                        sx={{
+                          '& .MuiAlert-message': {
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            width: '100%',
+                          },
+                        }}
+                      >
+                        <Stack
+                          direction="row"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          sx={{ width: '100%' }}
+                        >
+                          <Box>
+                            <Typography variant="body2" fontWeight={600}>
+                              Current Price: {formatCurrency(stockQuote.price)}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {stockQuote.change >= 0 ? '+' : ''}$
+                              {Math.abs(stockQuote.change).toFixed(2)} (
+                              {stockQuote.changePercent >= 0 ? '+' : ''}
+                              {stockQuote.changePercent.toFixed(2)}%)
+                            </Typography>
+                          </Box>
+                          <Button
+                            size="small"
+                            variant="contained"
+                            onClick={() => handleUseCurrentPrice(setFieldValue)}
+                            disabled={isSubmitting}
+                          >
+                            Use This Price
+                          </Button>
+                        </Stack>
+                      </Alert>
+                    )}
+
+                    {/* Price Error Display */}
+                    {priceError && (
+                      <Alert severity="warning" onClose={clearPriceData}>
+                        {getPriceErrorMessage()}
+                      </Alert>
+                    )}
+                  </Stack>
+
+                  {/* Shares and Purchase Price Row */}
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                    <Field name="shares">
+                      {({ field }: any) => (
+                        <TextField
+                          {...field}
+                          label="Number of Shares"
+                          placeholder="e.g., 100"
+                          error={touched.shares && Boolean(errors.shares)}
+                          helperText={
+                            touched.shares && errors.shares
+                              ? errors.shares
+                              : 'How many shares did you buy?'
+                          }
+                          required
+                          fullWidth
+                          disabled={isSubmitting}
+                          inputProps={{ inputMode: 'decimal' }}
+                          onChange={e => {
+                            const value = e.target.value.replace(/[^0-9.]/g, '');
+                            const parts = value.split('.');
+                            const formattedValue =
+                              parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : value;
+                            field.onChange(e);
+                            setFieldValue('shares', formattedValue);
+                          }}
+                        />
+                      )}
+                    </Field>
+
+                    <Field name="purchasePrice">
+                      {({ field }: any) => (
+                        <TextField
+                          {...field}
+                          label="Purchase Price"
+                          placeholder="e.g., 150.00"
+                          error={touched.purchasePrice && Boolean(errors.purchasePrice)}
+                          helperText={
+                            touched.purchasePrice && errors.purchasePrice
+                              ? errors.purchasePrice
+                              : 'Price per share in USD'
+                          }
+                          required
+                          fullWidth
+                          disabled={isSubmitting}
+                          inputProps={{ inputMode: 'decimal' }}
+                          InputProps={{
+                            startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                          }}
+                          onChange={e => {
+                            const value = e.target.value.replace(/[^0-9.]/g, '');
+                            const parts = value.split('.');
+                            const formattedValue =
+                              parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : value;
+                            field.onChange(e);
+                            setFieldValue('purchasePrice', formattedValue);
+                          }}
+                        />
+                      )}
+                    </Field>
+                  </Stack>
+
+                  {/* Purchase Date */}
+                  <Field name="purchaseDate">
+                    {({ field }: any) => (
+                      <TextField
+                        {...field}
+                        label="Purchase Date"
+                        type="date"
+                        error={touched.purchaseDate && Boolean(errors.purchaseDate)}
+                        helperText={
+                          touched.purchaseDate && errors.purchaseDate
+                            ? errors.purchaseDate
+                            : 'When did you purchase this stock?'
+                        }
+                        required
+                        fullWidth
+                        disabled={isSubmitting}
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                      />
+                    )}
+                  </Field>
+
+                  {/* Notes */}
+                  <Field name="notes">
+                    {({ field }: any) => (
+                      <TextField
+                        {...field}
+                        label="Notes (Optional)"
+                        placeholder="Investment thesis, strategy, or other notes..."
+                        fullWidth
+                        multiline
+                        rows={3}
+                        disabled={isSubmitting}
+                        helperText="Optional: Add notes about your investment decision"
+                        inputProps={{ maxLength: 500 }}
+                      />
+                    )}
+                  </Field>
+
+                  {/* Action Buttons */}
+                  <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 2 }}>
+                    <Button variant="outlined" onClick={handleCancel} disabled={isSubmitting}>
+                      Cancel
+                    </Button>
+
                     <Button
-                      variant="outlined"
-                      onClick={handleGetCurrentPrice}
-                      disabled={!formData.symbol.trim() || isFetchingPrice || isSubmitting}
-                      startIcon={isFetchingPrice ? <CircularProgress size={16} /> : <RefreshIcon />}
-                      sx={{
-                        minWidth: 140,
-                        flexShrink: 0,
-                        alignSelf: 'flex-start',
-                        mt: '16px', // Align with input field (accounting for label)
-                        height: '56px', // Standard input height
-                      }}
+                      type="submit"
+                      variant="contained"
+                      startIcon={isSubmitting ? <CircularProgress size={16} /> : <SaveIcon />}
+                      disabled={isSubmitting}
+                      sx={{ minWidth: 160 }}
                     >
-                      {isFetchingPrice ? 'Getting...' : 'Get Price'}
+                      {isSubmitting ? 'Adding Position...' : 'Add Position'}
                     </Button>
                   </Stack>
-                </Box>
-
-                {/* Current Price Display */}
-                {isQuoteValid && (
-                  <Alert
-                    severity="info"
-                    sx={{
-                      '& .MuiAlert-message': {
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        width: '100%',
-                      },
-                    }}
-                  >
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                      sx={{ width: '100%' }}
-                    >
-                      <Box>
-                        <Typography variant="body2" fontWeight={600}>
-                          Current Price: {formatCurrency(stockQuote.price)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {stockQuote.change >= 0 ? '+' : ''}$
-                          {Math.abs(stockQuote.change).toFixed(2)} (
-                          {stockQuote.changePercent >= 0 ? '+' : ''}
-                          {stockQuote.changePercent.toFixed(2)}%)
-                        </Typography>
-                      </Box>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        onClick={handleUseCurrentPrice}
-                        disabled={isSubmitting}
-                      >
-                        Use This Price
-                      </Button>
-                    </Stack>
-                  </Alert>
-                )}
-
-                {/* Price Error Display */}
-                {priceError && (
-                  <Alert severity="warning" onClose={clearPriceData}>
-                    {getPriceErrorMessage()}
-                  </Alert>
-                )}
-              </Stack>
-
-              {/* Shares and Purchase Price Row */}
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <TextField
-                  label="Number of Shares"
-                  placeholder="e.g., 100"
-                  value={formData.shares}
-                  onChange={handleInputChange('shares')}
-                  error={Boolean(formErrors.shares)}
-                  helperText={formErrors.shares || 'How many shares did you buy?'}
-                  required
-                  fullWidth
-                  disabled={isSubmitting}
-                  inputProps={{ inputMode: 'decimal' }}
-                />
-
-                <TextField
-                  label="Purchase Price"
-                  placeholder="e.g., 150.00"
-                  value={formData.purchasePrice}
-                  onChange={handleInputChange('purchasePrice')}
-                  error={Boolean(formErrors.purchasePrice)}
-                  helperText={formErrors.purchasePrice || 'Price per share in USD'}
-                  required
-                  fullWidth
-                  disabled={isSubmitting}
-                  inputProps={{ inputMode: 'decimal' }}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                  }}
-                />
-              </Stack>
-
-              {/* Purchase Date */}
-              <TextField
-                label="Purchase Date"
-                type="date"
-                value={formData.purchaseDate}
-                onChange={handleInputChange('purchaseDate')}
-                error={Boolean(formErrors.purchaseDate)}
-                helperText={formErrors.purchaseDate || 'When did you purchase this stock?'}
-                required
-                fullWidth
-                disabled={isSubmitting}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-
-              {/* Notes */}
-              <TextField
-                label="Notes (Optional)"
-                placeholder="Investment thesis, strategy, or other notes..."
-                value={formData.notes}
-                onChange={handleInputChange('notes')}
-                fullWidth
-                multiline
-                rows={3}
-                disabled={isSubmitting}
-                helperText="Optional: Add notes about your investment decision"
-                inputProps={{ maxLength: 500 }}
-              />
-
-              {/* Action Buttons */}
-              <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 2 }}>
-                <Button variant="outlined" onClick={handleCancel} disabled={isSubmitting}>
-                  Cancel
-                </Button>
-
-                <Button
-                  type="submit"
-                  variant="contained"
-                  startIcon={isSubmitting ? <CircularProgress size={16} /> : <SaveIcon />}
-                  disabled={isSubmitting || !hasChanges}
-                  sx={{ minWidth: 160 }}
-                >
-                  {isSubmitting ? 'Adding Position...' : 'Add Position'}
-                </Button>
-              </Stack>
-            </Stack>
-          </form>
+                </Stack>
+              </Form>
+            )}
+          </Formik>
         </Paper>
 
         {/* Help Text */}

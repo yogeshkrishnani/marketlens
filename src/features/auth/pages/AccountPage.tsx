@@ -1,4 +1,3 @@
-
 import { AccountSettings } from '@features/auth/components/AccountSettings';
 import { ProfileEditForm } from '@features/auth/components/ProfileEditForm';
 import { SecuritySettings } from '@features/auth/components/SecuritySettings';

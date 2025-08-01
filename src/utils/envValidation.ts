@@ -1,7 +1,5 @@
 export const validateEnvironmentVariables = (): void => {
-  const requiredVars = [
-    'VITE_ALPHA_VANTAGE_API_KEY',
-  ];
+  const requiredVars = ['VITE_ALPHA_VANTAGE_API_KEY'];
 
   const missingVars = requiredVars.filter(
     varName =>
