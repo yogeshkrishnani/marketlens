@@ -17,19 +17,16 @@ import { CreatePortfolioData } from '../models';
 
 import { useAuth } from '@/features/auth/context/AuthContext';
 
-// Form validation interface
 interface FormErrors {
   name?: string;
   description?: string;
 }
 
-// Form data interface
 interface FormData {
   name: string;
   description: string;
 }
 
-// Component props interface
 interface PortfolioFormProps {
   readonly title?: string;
   readonly submitButtonText?: string;
@@ -45,7 +42,6 @@ export const PortfolioForm: React.FC<PortfolioFormProps> = ({
   const { currentUser } = useAuth();
   const { createPortfolio, isLoading, error, clearError } = usePortfolio();
 
-  // Form state
   const [formData, setFormData] = useState<FormData>({
     name: '',
     description: '',
@@ -54,11 +50,9 @@ export const PortfolioForm: React.FC<PortfolioFormProps> = ({
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Validate form data
   const validateForm = useCallback((data: FormData): FormErrors => {
     const errors: FormErrors = {};
 
-    // Name validation
     if (!data.name.trim()) {
       errors.name = 'Portfolio name is required';
     } else if (data.name.trim().length < 2) {
@@ -67,7 +61,6 @@ export const PortfolioForm: React.FC<PortfolioFormProps> = ({
       errors.name = 'Portfolio name must be less than 50 characters';
     }
 
-    // Description validation (optional but if provided, check length)
     if (data.description.trim().length > 200) {
       errors.description = 'Description must be less than 200 characters';
     }
@@ -75,7 +68,6 @@ export const PortfolioForm: React.FC<PortfolioFormProps> = ({
     return errors;
   }, []);
 
-  // Handle input changes
   const handleInputChange = useCallback(
     (field: keyof FormData) => {
       return (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,7 +78,6 @@ export const PortfolioForm: React.FC<PortfolioFormProps> = ({
           [field]: value,
         }));
 
-        // Clear field error when user starts typing
         if (formErrors[field]) {
           setFormErrors(prev => ({
             ...prev,
@@ -94,7 +85,6 @@ export const PortfolioForm: React.FC<PortfolioFormProps> = ({
           }));
         }
 
-        // Clear global error
         if (error) {
           clearError();
         }
@@ -103,7 +93,6 @@ export const PortfolioForm: React.FC<PortfolioFormProps> = ({
     [formErrors, error, clearError]
   );
 
-  // Handle form submission
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
@@ -113,7 +102,6 @@ export const PortfolioForm: React.FC<PortfolioFormProps> = ({
         return;
       }
 
-      // Validate form
       const errors = validateForm(formData);
       setFormErrors(errors);
 
@@ -124,20 +112,16 @@ export const PortfolioForm: React.FC<PortfolioFormProps> = ({
       setIsSubmitting(true);
 
       try {
-        // Create portfolio data
         const portfolioData: CreatePortfolioData = {
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
         };
 
-        // Create portfolio
         const newPortfolio = await createPortfolio(currentUser.uid, portfolioData);
 
-        // Navigate to the new portfolio
         navigate(`/portfolio/${newPortfolio.id}`);
       } catch (error) {
         console.error('Failed to create portfolio:', error);
-        // Error is handled by the context
       } finally {
         setIsSubmitting(false);
       }
@@ -145,7 +129,6 @@ export const PortfolioForm: React.FC<PortfolioFormProps> = ({
     [currentUser?.uid, validateForm, formData, createPortfolio, navigate]
   );
 
-  // Handle cancel action
   const handleCancel = useCallback(() => {
     if (onCancel) {
       onCancel();
@@ -154,13 +137,11 @@ export const PortfolioForm: React.FC<PortfolioFormProps> = ({
     }
   }, [onCancel, navigate]);
 
-  // Check if form has changes
   const hasChanges = formData.name.trim() || formData.description.trim();
 
   return (
     <Container maxWidth="md">
       <Box sx={{ py: 4 }}>
-        {/* Header */}
         <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
           <Button
             variant="text"
@@ -175,18 +156,15 @@ export const PortfolioForm: React.FC<PortfolioFormProps> = ({
           </Typography>
         </Box>
 
-        {/* Form */}
         <Paper sx={{ p: 4 }}>
           <form onSubmit={handleSubmit}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              {/* Global error message */}
               {error && (
                 <Alert severity="error" onClose={clearError}>
                   {error}
                 </Alert>
               )}
 
-              {/* Portfolio Name */}
               <TextField
                 label="Portfolio Name"
                 placeholder="e.g., Growth Portfolio, Retirement Fund"
@@ -201,7 +179,6 @@ export const PortfolioForm: React.FC<PortfolioFormProps> = ({
                 inputProps={{ maxLength: 50 }}
               />
 
-              {/* Portfolio Description */}
               <TextField
                 label="Description (Optional)"
                 placeholder="Describe your investment strategy, goals, or focus..."
@@ -218,7 +195,6 @@ export const PortfolioForm: React.FC<PortfolioFormProps> = ({
                 inputProps={{ maxLength: 200 }}
               />
 
-              {/* Action Buttons */}
               <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
                 <Button
                   variant="outlined"
@@ -244,7 +220,6 @@ export const PortfolioForm: React.FC<PortfolioFormProps> = ({
           </form>
         </Paper>
 
-        {/* Help Text */}
         <Box sx={{ mt: 3, p: 3, backgroundColor: 'background.default', borderRadius: 1 }}>
           <Typography variant="body2" color="text.secondary" gutterBottom>
             <strong>Getting Started:</strong>

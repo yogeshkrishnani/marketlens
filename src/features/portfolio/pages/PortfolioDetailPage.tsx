@@ -35,7 +35,6 @@ import { getPortfolioById, removePositionFromPortfolio } from '../services/portf
 
 import { financialColors } from '@/theme';
 
-// Portfolio-specific formatting utilities
 const formatPortfolioCurrency = (value: number): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -57,13 +56,11 @@ const formatPortfolioChange = (change: number, changePercent: number): string =>
   return `${sign}${formattedAmount} (${sign}${changePercent.toFixed(2)}%)`;
 };
 
-// Format percentage values (simple version for display)
 const formatPercentage = (value: number): string => {
   const sign = value >= 0 ? '+' : '';
   return `${sign}${value.toFixed(2)}%`;
 };
 
-// Calculate position metrics with market data
 const calculatePositionMetrics = (
   position: Position,
   currentPrice: number,
@@ -87,7 +84,6 @@ const calculatePositionMetrics = (
   };
 };
 
-// Calculate portfolio-level metrics
 const calculatePortfolioMetrics = (
   portfolio: Portfolio,
   positionsWithMarketData: PositionWithMarketData[]
@@ -111,7 +107,6 @@ const calculatePortfolioMetrics = (
   };
 };
 
-// Position Card Component
 interface PositionCardProps {
   readonly position: PositionWithMarketData;
   readonly onEdit: (position: Position) => void;

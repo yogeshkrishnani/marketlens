@@ -1,4 +1,3 @@
-// src/features/auth/components/AuthStatus.tsx
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -42,7 +41,6 @@ export const AuthStatus: React.FC = () => {
     }
   };
 
-  // If user is not logged in, show login/register buttons
   if (!currentUser) {
     return (
       <Box sx={{ display: 'flex', gap: 1 }}>
@@ -56,7 +54,6 @@ export const AuthStatus: React.FC = () => {
     );
   }
 
-  // If user is logged in, show user menu
   return (
     <>
       <Box

@@ -1,4 +1,3 @@
-// src/features/auth/pages/LoginPage.tsx
 import GoogleIcon from '@mui/icons-material/Google';
 import {
   Alert,
@@ -26,13 +25,11 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Get the page the user was trying to access
   const from = location.state?.from?.pathname || '/';
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate form
     if (!email || !password) {
       setError('Please enter both email and password');
       return;
@@ -42,7 +39,6 @@ export const LoginPage: React.FC = () => {
       setError('');
       setLoading(true);
       await signIn(email, password);
-      // Redirect to the page they were trying to access
       navigate(from, { replace: true });
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');

@@ -1,6 +1,3 @@
-// Portfolio and Position data models for MarketLens application
-
-// Position interface - represents a stock holding within a portfolio
 export interface Position {
   readonly id: string;
   readonly symbol: string;

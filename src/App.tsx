@@ -1,5 +1,3 @@
-// src/App.tsx
-
 import { MainLayout } from '@components/layout/MainLayout';
 import { UserProvider } from '@features/auth/context/UserContext';
 import { AccountPage } from '@features/auth/pages/AccountPage';
@@ -32,11 +30,8 @@ import { useAppSelector } from '@/hooks';
 import { createAppTheme } from '@/theme';
 
 export const App = () => {
-  // Get the current theme mode from Redux store
   const { mode } = useAppSelector(state => state.theme);
 
-  // Create the theme based on the current mode
-  // Memoize to prevent unnecessary recalculations
   const theme = useMemo(() => createAppTheme(mode), [mode]);
 
   return (
@@ -49,18 +44,15 @@ export const App = () => {
               <ComparisonProvider>
                 <MainLayout>
                   <Routes>
-                    {/* Public routes */}
                     <Route path="/" element={<MarketOverview />} />
                     <Route path="/stocks" element={<StocksPage />} />
                     <Route path="/stocks/:symbol" element={<StockDetailPage />} />
                     <Route path="/comparison" element={<ComparisonPage />} />
 
-                    {/* Authentication routes */}
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
                     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-                    {/* Protected portfolio routes */}
                     <Route
                       path="/portfolio"
                       element={
@@ -110,7 +102,6 @@ export const App = () => {
                       }
                     />
 
-                    {/* Protected watchlist routes */}
                     <Route
                       path="/watchlists"
                       element={
@@ -144,7 +135,6 @@ export const App = () => {
                       }
                     />
 
-                    {/* Other protected routes */}
                     <Route
                       path="/account"
                       element={
@@ -154,7 +144,6 @@ export const App = () => {
                       }
                     />
 
-                    {/* Fallback route */}
                     <Route path="*" element={<div>Page not found</div>} />
                   </Routes>
                 </MainLayout>

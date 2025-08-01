@@ -1,4 +1,3 @@
-// src/features/auth/components/ChangePasswordForm.tsx
 import { Save, Visibility, VisibilityOff } from '@mui/icons-material';
 import {
   Alert,
@@ -28,7 +27,6 @@ export const ChangePasswordForm: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  // Toggle password visibility
   const handleToggleCurrentPassword = () => {
     setShowCurrentPassword(!showCurrentPassword);
   };
@@ -41,30 +39,24 @@ export const ChangePasswordForm: React.FC = () => {
     setShowConfirmPassword(!showConfirmPassword);
   };
 
-  // Validate form
   const validateForm = () => {
-    // Reset error state
     setError('');
 
-    // Check if all fields are filled
     if (!currentPassword || !newPassword || !confirmPassword) {
       setError('All fields are required');
       return false;
     }
 
-    // Check if new password meets requirements
     if (newPassword.length < 8) {
       setError('New password must be at least 8 characters long');
       return false;
     }
 
-    // Check if passwords match
     if (newPassword !== confirmPassword) {
       setError('New passwords do not match');
       return false;
     }
 
-    // Check if new password is different from current
     if (newPassword === currentPassword) {
       setError('New password must be different from current password');
       return false;
@@ -73,7 +65,6 @@ export const ChangePasswordForm: React.FC = () => {
     return true;
   };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -82,7 +73,6 @@ export const ChangePasswordForm: React.FC = () => {
       return;
     }
 
-    // Validate form
     if (!validateForm()) {
       return;
     }
@@ -90,26 +80,21 @@ export const ChangePasswordForm: React.FC = () => {
     try {
       setLoading(true);
 
-      // Re-authenticate user
       const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
 
       await reauthenticateWithCredential(currentUser, credential);
 
-      // Update password
       await updatePassword(currentUser, newPassword);
 
-      // Clear form and show success message
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setSuccess(true);
 
-      // Reset success message after 5 seconds
       setTimeout(() => {
         setSuccess(false);
       }, 5000);
     } catch (err: any) {
-      // Handle specific error cases
       if (err.code === 'auth/wrong-password') {
         setError('Current password is incorrect');
       } else if (err.code === 'auth/too-many-requests') {
@@ -123,7 +108,6 @@ export const ChangePasswordForm: React.FC = () => {
     }
   };
 
-  // Show alternative message for OAuth users
   if (currentUser?.providerData[0]?.providerId !== 'password') {
     return (
       <Alert severity="info" sx={{ my: 2 }}>

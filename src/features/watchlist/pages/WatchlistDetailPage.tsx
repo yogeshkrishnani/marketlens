@@ -1,5 +1,3 @@
-// src/features/watchlist/pages/WatchlistDetailPage.tsx
-
 import {
   Add as AddIcon,
   ArrowBack as ArrowBackIcon,
@@ -46,7 +44,6 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { useGetBatchStockQuotesQuery, useGetStockQuoteQuery } from '@/services/api/financialApi';
 import { financialColors } from '@/theme';
 
-// Format currency for display
 const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -68,12 +65,10 @@ export const WatchlistDetailPage: React.FC = () => {
   const [isAddingSymbol, setIsAddingSymbol] = useState(false);
   const [removingSymbol, setRemovingSymbol] = useState<string | null>(null);
 
-  // State for RTK Query-based symbol price fetching
   const [quoteTriggerSymbol, setQuoteTriggerSymbol] = useState<string>('');
   const [symbolPrice, setSymbolPrice] = useState<any>(null);
   const [symbolError, setSymbolError] = useState<string | null>(null);
 
-  // Use RTK Query to fetch real-time stock quotes for all symbols
   const {
     data: stockQuotes,
     isLoading: isPriceLoading,
@@ -81,25 +76,22 @@ export const WatchlistDetailPage: React.FC = () => {
     refetch: refetchPrices,
   } = useGetBatchStockQuotesQuery(watchlist?.symbols || [], {
     skip: !watchlist?.symbols?.length,
-    pollingInterval: 30000, // Auto-refresh every 30 seconds
+    pollingInterval: 30000,
   });
 
-  // Use RTK Query for individual symbol price fetching
   const {
     data: symbolQuoteData,
     isLoading: isFetchingSymbolPrice,
     error: symbolQuoteError,
   } = useGetStockQuoteQuery(quoteTriggerSymbol, {
-    skip: !quoteTriggerSymbol, // Only fetch when we have a symbol to fetch
+    skip: !quoteTriggerSymbol,
   });
 
-  // Transform stocks with market data
   const watchlistItems = useMemo((): WatchlistItem[] => {
     if (!watchlist?.symbols || !stockQuotes) {
       return [];
     }
 
-    // Create quotes lookup
     const quotesLookup: Record<string, any> = {};
     stockQuotes.forEach(quote => {
       quotesLookup[quote.symbol] = quote;
@@ -132,7 +124,6 @@ export const WatchlistDetailPage: React.FC = () => {
       .filter((item): item is WatchlistItem => item !== null);
   }, [watchlist?.symbols, stockQuotes]);
 
-  // Calculate summary statistics
   const summaryStats = useMemo(() => {
     if (watchlistItems.length === 0) {
       return null;
@@ -162,7 +153,6 @@ export const WatchlistDetailPage: React.FC = () => {
     };
   }, [watchlistItems]);
 
-  // Load watchlist data
   const loadWatchlist = useCallback(async () => {
     if (!watchlistId) {
       setError('Watchlist ID not provided');
@@ -181,7 +171,6 @@ export const WatchlistDetailPage: React.FC = () => {
         return;
       }
 
-      // Verify ownership
       if (watchlistData.userId !== currentUser?.uid) {
         setError('You do not have permission to view this watchlist');
         return;
@@ -196,15 +185,12 @@ export const WatchlistDetailPage: React.FC = () => {
     }
   }, [watchlistId, currentUser?.uid]);
 
-  // Load data on mount
   useEffect(() => {
     loadWatchlist();
   }, [loadWatchlist]);
 
-  // Handle RTK Query response for symbol price
   useEffect(() => {
     if (symbolQuoteData && quoteTriggerSymbol) {
-      // Transform to the format expected by the UI
       setSymbolPrice({
         symbol: symbolQuoteData.symbol,
         price: symbolQuoteData.price,
@@ -214,12 +200,10 @@ export const WatchlistDetailPage: React.FC = () => {
     }
   }, [symbolQuoteData, quoteTriggerSymbol]);
 
-  // Handle RTK Query errors for symbol price
   useEffect(() => {
     if (symbolQuoteError && quoteTriggerSymbol) {
       let errorMessage = `Unable to fetch price for "${quoteTriggerSymbol}". Please verify the stock symbol and try again.`;
 
-      // Use your existing error handling patterns
       if ('status' in symbolQuoteError) {
         switch (symbolQuoteError.status) {
           case 404:
@@ -240,7 +224,6 @@ export const WatchlistDetailPage: React.FC = () => {
     }
   }, [symbolQuoteError, quoteTriggerSymbol]);
 
-  // Handle navigation
   const handleBack = useCallback(() => {
     navigate('/watchlists');
   }, [navigate]);
@@ -276,7 +259,6 @@ export const WatchlistDetailPage: React.FC = () => {
     }
   }, [loadWatchlist, watchlist?.symbols?.length, refetchPrices]);
 
-  // Handle getting symbol price using RTK Query
   const handleGetSymbolPrice = useCallback(() => {
     if (!newSymbol.trim()) return;
 
@@ -291,13 +273,11 @@ export const WatchlistDetailPage: React.FC = () => {
       return;
     }
 
-    // Clear previous errors and trigger the RTK Query
     setSymbolError(null);
     setSymbolPrice(null);
-    setQuoteTriggerSymbol(symbol); // This triggers the RTK Query
+    setQuoteTriggerSymbol(symbol);
   }, [newSymbol, watchlist?.symbols]);
 
-  // Handle adding new symbol
   const handleAddSymbol = useCallback(async () => {
     if (!watchlistId || !newSymbol.trim()) return;
 
@@ -318,10 +298,10 @@ export const WatchlistDetailPage: React.FC = () => {
     try {
       await addSymbolToWatchlist(watchlistId, symbol);
       setNewSymbol('');
-      setSymbolPrice(null); // Clear price data
-      setSymbolError(null); // Clear any errors
-      setQuoteTriggerSymbol(''); // Clear RTK Query trigger
-      await loadWatchlist(); // Reload to get updated data
+      setSymbolPrice(null);
+      setSymbolError(null);
+      setQuoteTriggerSymbol('');
+      await loadWatchlist();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to add symbol';
       setError(errorMessage);
@@ -330,7 +310,6 @@ export const WatchlistDetailPage: React.FC = () => {
     }
   }, [watchlistId, newSymbol, watchlist?.symbols, loadWatchlist]);
 
-  // Handle removing symbol
   const handleRemoveSymbol = useCallback(
     async (symbol: string) => {
       if (!watchlistId) return;
@@ -343,7 +322,7 @@ export const WatchlistDetailPage: React.FC = () => {
 
       try {
         await removeSymbolFromWatchlist(watchlistId, symbol);
-        await loadWatchlist(); // Reload to get updated data
+        await loadWatchlist();
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to remove symbol';
         setError(errorMessage);
@@ -354,7 +333,6 @@ export const WatchlistDetailPage: React.FC = () => {
     [watchlistId, loadWatchlist]
   );
 
-  // Handle stock row click - navigate to stock detail
   const handleStockClick = useCallback(
     (symbol: string) => {
       navigate(`/stocks/${symbol}`);
@@ -362,7 +340,6 @@ export const WatchlistDetailPage: React.FC = () => {
     [navigate]
   );
 
-  // Loading state
   if (isLoading && !watchlist) {
     return (
       <Box
@@ -378,7 +355,6 @@ export const WatchlistDetailPage: React.FC = () => {
     );
   }
 
-  // Error state
   if (error && !watchlist) {
     return (
       <Container maxWidth="lg">
@@ -412,7 +388,6 @@ export const WatchlistDetailPage: React.FC = () => {
   return (
     <Container maxWidth="lg">
       <Box sx={{ py: 4 }}>
-        {/* Header */}
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 4 }}>
           <Stack direction="row" alignItems="center" spacing={2}>
             <Button
@@ -551,7 +526,7 @@ export const WatchlistDetailPage: React.FC = () => {
                     if (value !== newSymbol) {
                       setSymbolPrice(null);
                       setSymbolError(null);
-                      setQuoteTriggerSymbol(''); // Clear RTK Query trigger
+                      setQuoteTriggerSymbol('');
                     }
                   }}
                   disabled={isAddingSymbol}
@@ -578,7 +553,7 @@ export const WatchlistDetailPage: React.FC = () => {
                     minWidth: 120,
                     flexShrink: 0,
                     alignSelf: 'flex-start',
-                    mt: '16px', // Align with input field
+                    mt: '16px',
                     height: '56px',
                   }}
                 >

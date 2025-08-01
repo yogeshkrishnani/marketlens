@@ -1,5 +1,3 @@
-// src/features/market/components/MarketOverviewHeader.tsx
-
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -10,24 +8,21 @@ import { useGetMarketIndicesQuery } from '@/services/api/financialApi';
 import { useGetSectorPerformanceQuery } from '@/services/api/financialApi';
 import { financialColors } from '@/theme';
 
-// Helper function to format date in US Eastern Time
 const formatDateInET = (timestamp: number): { date: string; time: string } => {
-  // Create date object from Unix timestamp
   const date = new Date(timestamp * 1000);
 
-  // Format the date in US Eastern Time
   const options: Intl.DateTimeFormatOptions = {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
     year: 'numeric',
-    timeZone: 'America/New_York', // US Eastern Time
+    timeZone: 'America/New_York',
   };
 
   const timeOptions: Intl.DateTimeFormatOptions = {
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: 'America/New_York', // US Eastern Time
+    timeZone: 'America/New_York',
   };
 
   return {
@@ -37,14 +32,11 @@ const formatDateInET = (timestamp: number): { date: string; time: string } => {
 };
 
 export const MarketOverviewHeader = () => {
-  // Fetch market data from our APIs
   const { data: indices, isLoading: indicesLoading } = useGetMarketIndicesQuery();
   const { data: sectors, isLoading: sectorsLoading } = useGetSectorPerformanceQuery();
 
-  // Use the utility function to generate market summary
   const { marketTrend, summaryText, timestamp } = getMarketSummary(indices, sectors);
 
-  // Format the date in ET timezone
   let formattedDate = '';
   let formattedTime = '';
 
@@ -53,14 +45,12 @@ export const MarketOverviewHeader = () => {
     formattedDate = date;
     formattedTime = time;
   } else {
-    // Fallback to current date in ET if no timestamp available
     const now = Date.now() / 1000;
     const { date, time } = formatDateInET(now);
     formattedDate = date;
     formattedTime = time;
   }
 
-  // Choose trend icon based on market trend
   const TrendIcon =
     marketTrend === 'up'
       ? TrendingUpIcon
@@ -68,7 +58,6 @@ export const MarketOverviewHeader = () => {
         ? TrendingDownIcon
         : TrendingFlatIcon;
 
-  // Choose color based on market trend
   const trendColor =
     marketTrend === 'up'
       ? financialColors.positive

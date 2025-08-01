@@ -1,5 +1,3 @@
-// src/features/watchlist/services/watchlistService.ts
-
 import {
   addDoc,
   collection,
@@ -25,10 +23,8 @@ import {
 
 import { db } from '@/services/firebase/config';
 
-// Collection name
 const WATCHLISTS_COLLECTION = 'watchlists';
 
-// Helper function to transform Watchlist to Firestore document
 const watchlistToFirestore = (watchlist: Omit<Watchlist, 'id'>) => {
   return {
     name: watchlist.name,
@@ -39,7 +35,6 @@ const watchlistToFirestore = (watchlist: Omit<Watchlist, 'id'>) => {
   };
 };
 
-// Helper function to transform Firestore document to Watchlist
 const firestoreToWatchlist = (doc: any, docId: string): Watchlist => {
   const data = doc.data ? doc.data() : doc;
 
@@ -53,15 +48,11 @@ const firestoreToWatchlist = (doc: any, docId: string): Watchlist => {
   };
 };
 
-/**
- * Create a new watchlist for the current user
- */
 export const createWatchlist = async (
   userId: string,
   watchlistData: CreateWatchlistData
 ): Promise<Watchlist> => {
   try {
-    // Validate input
     if (!userId) {
       throw new Error('User ID is required');
     }
@@ -72,7 +63,6 @@ export const createWatchlist = async (
       );
     }
 
-    // Validate symbols if provided
     const symbols = watchlistData.symbols || [];
     if (symbols.length > WATCHLIST_CONSTRAINTS.MAX_SYMBOLS_PER_WATCHLIST) {
       throw new Error(
@@ -80,7 +70,6 @@ export const createWatchlist = async (
       );
     }
 
-    // Validate each symbol
     const validatedSymbols: string[] = [];
     for (const symbol of symbols) {
       const upperSymbol = symbol.toUpperCase().trim();
@@ -107,7 +96,6 @@ export const createWatchlist = async (
       watchlistToFirestore(watchlistToCreate)
     );
 
-    // Return the created watchlist with the generated ID
     return {
       id: watchlistRef.id,
       ...watchlistToCreate,
@@ -121,9 +109,6 @@ export const createWatchlist = async (
   }
 };
 
-/**
- * Get all watchlists for a specific user
- */
 export const getUserWatchlists = async (userId: string): Promise<Watchlist[]> => {
   try {
     if (!userId) {
@@ -145,9 +130,6 @@ export const getUserWatchlists = async (userId: string): Promise<Watchlist[]> =>
   }
 };
 
-/**
- * Get a single watchlist by ID
- */
 export const getWatchlistById = async (watchlistId: string): Promise<Watchlist | null> => {
   try {
     if (!watchlistId) {
@@ -168,9 +150,6 @@ export const getWatchlistById = async (watchlistId: string): Promise<Watchlist |
   }
 };
 
-/**
- * Update an existing watchlist
- */
 export const updateWatchlist = async (
   watchlistId: string,
   updateData: UpdateWatchlistData
@@ -180,14 +159,12 @@ export const updateWatchlist = async (
       throw new Error('Watchlist ID is required');
     }
 
-    // Validate name if provided
     if (updateData.name !== undefined && !isValidWatchlistName(updateData.name)) {
       throw new Error(
         `Watchlist name must be between ${WATCHLIST_CONSTRAINTS.MIN_NAME_LENGTH} and ${WATCHLIST_CONSTRAINTS.MAX_NAME_LENGTH} characters`
       );
     }
 
-    // Validate symbols if provided
     let validatedSymbols: string[] | undefined;
     if (updateData.symbols !== undefined) {
       if (updateData.symbols.length > WATCHLIST_CONSTRAINTS.MAX_SYMBOLS_PER_WATCHLIST) {
@@ -196,7 +173,6 @@ export const updateWatchlist = async (
         );
       }
 
-      // Validate each symbol
       validatedSymbols = [];
       for (const symbol of updateData.symbols) {
         const upperSymbol = symbol.toUpperCase().trim();
@@ -239,9 +215,6 @@ export const updateWatchlist = async (
   }
 };
 
-/**
- * Delete a watchlist
- */
 export const deleteWatchlist = async (watchlistId: string): Promise<void> => {
   try {
     if (!watchlistId) {
@@ -256,9 +229,6 @@ export const deleteWatchlist = async (watchlistId: string): Promise<void> => {
   }
 };
 
-/**
- * Add a symbol to a watchlist
- */
 export const addSymbolToWatchlist = async (watchlistId: string, symbol: string): Promise<void> => {
   try {
     if (!watchlistId) {
@@ -270,25 +240,21 @@ export const addSymbolToWatchlist = async (watchlistId: string, symbol: string):
       throw new Error(`Invalid stock symbol: ${symbol}`);
     }
 
-    // Get current watchlist
     const watchlist = await getWatchlistById(watchlistId);
     if (!watchlist) {
       throw new Error('Watchlist not found');
     }
 
-    // Check if symbol already exists
     if (watchlist.symbols.includes(upperSymbol)) {
       throw new Error(`Symbol ${upperSymbol} is already in this watchlist`);
     }
 
-    // Check symbol limit
     if (watchlist.symbols.length >= WATCHLIST_CONSTRAINTS.MAX_SYMBOLS_PER_WATCHLIST) {
       throw new Error(
         `Maximum ${WATCHLIST_CONSTRAINTS.MAX_SYMBOLS_PER_WATCHLIST} symbols allowed per watchlist`
       );
     }
 
-    // Add symbol to watchlist
     const updatedSymbols = [...watchlist.symbols, upperSymbol];
     await updateWatchlist(watchlistId, { symbols: updatedSymbols });
   } catch (error) {
@@ -300,9 +266,6 @@ export const addSymbolToWatchlist = async (watchlistId: string, symbol: string):
   }
 };
 
-/**
- * Remove a symbol from a watchlist
- */
 export const removeSymbolFromWatchlist = async (
   watchlistId: string,
   symbol: string
@@ -314,18 +277,15 @@ export const removeSymbolFromWatchlist = async (
 
     const upperSymbol = symbol.toUpperCase().trim();
 
-    // Get current watchlist
     const watchlist = await getWatchlistById(watchlistId);
     if (!watchlist) {
       throw new Error('Watchlist not found');
     }
 
-    // Check if symbol exists in watchlist
     if (!watchlist.symbols.includes(upperSymbol)) {
       throw new Error(`Symbol ${upperSymbol} is not in this watchlist`);
     }
 
-    // Remove symbol from watchlist
     const updatedSymbols = watchlist.symbols.filter(s => s !== upperSymbol);
     await updateWatchlist(watchlistId, { symbols: updatedSymbols });
   } catch (error) {
@@ -337,9 +297,6 @@ export const removeSymbolFromWatchlist = async (
   }
 };
 
-/**
- * Check if user owns a watchlist
- */
 export const verifyWatchlistOwnership = async (
   watchlistId: string,
   userId: string
@@ -353,9 +310,6 @@ export const verifyWatchlistOwnership = async (
   }
 };
 
-/**
- * Get watchlists count for a user (to enforce limits)
- */
 export const getUserWatchlistCount = async (userId: string): Promise<number> => {
   try {
     if (!userId) {
@@ -372,9 +326,6 @@ export const getUserWatchlistCount = async (userId: string): Promise<number> => 
   }
 };
 
-/**
- * Check if user can create more watchlists
- */
 export const canUserCreateWatchlist = async (userId: string): Promise<boolean> => {
   try {
     const currentCount = await getUserWatchlistCount(userId);
@@ -385,14 +336,11 @@ export const canUserCreateWatchlist = async (userId: string): Promise<boolean> =
   }
 };
 
-/**
- * Get all unique symbols across user's watchlists (useful for batch API calls)
- */
 export const getUserWatchlistSymbols = async (userId: string): Promise<string[]> => {
   try {
     const watchlists = await getUserWatchlists(userId);
     const allSymbols = watchlists.flatMap(watchlist => watchlist.symbols);
-    return [...new Set(allSymbols)]; // Remove duplicates
+    return [...new Set(allSymbols)];
   } catch (error) {
     console.error('Error getting user watchlist symbols:', error);
     return [];

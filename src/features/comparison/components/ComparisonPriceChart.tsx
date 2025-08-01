@@ -22,7 +22,6 @@ export const ComparisonPriceChart: React.FC<ComparisonPriceChartProps> = ({
 }) => {
   const [chartType, setChartType] = useState<ChartType>('percent');
 
-  // Calculate initial price and percentage change for each stock
   const stockData = useMemo(() => {
     const result: {
       symbol: string;
@@ -36,21 +35,18 @@ export const ComparisonPriceChart: React.FC<ComparisonPriceChartProps> = ({
       const prices = data[stock.symbol] || [];
 
       if (prices.length > 0) {
-        // Sort by timestamp ascending
         const sortedPrices = [...prices].sort((a, b) => a.timestamp - b.timestamp);
 
-        // Get initial price (earliest in range)
         const initialPrice = sortedPrices[0].close;
 
-        // Create data points for both price and percentage charts
         const priceData = sortedPrices.map(price => ({
-          x: price.timestamp * 1000, // Convert to milliseconds for ApexCharts
+          x: price.timestamp * 1000,
           y: price.close,
         }));
 
         const percentData = sortedPrices.map(price => ({
-          x: price.timestamp * 1000, // Convert to milliseconds for ApexCharts
-          y: ((price.close - initialPrice) / initialPrice) * 100, // Percentage change
+          x: price.timestamp * 1000,
+          y: ((price.close - initialPrice) / initialPrice) * 100,
         }));
 
         result.push({
@@ -66,16 +62,13 @@ export const ComparisonPriceChart: React.FC<ComparisonPriceChartProps> = ({
     return result;
   }, [data, stocks]);
 
-  // Handle chart type change
   const handleChartTypeChange = (_: React.MouseEvent<HTMLElement>, newType: ChartType | null) => {
     if (newType !== null) {
       setChartType(newType);
     }
   };
 
-  // Chart options
   const chartOptions: ApexOptions = useMemo(() => {
-    // Base options for both chart types
     const baseOptions: ApexOptions = {
       chart: {
         type: 'line',
@@ -113,9 +106,7 @@ export const ComparisonPriceChart: React.FC<ComparisonPriceChartProps> = ({
           show: true,
         },
         x: {
-          // The correct type for tooltip x formatter
           formatter: function (val: any, timestamp?: number) {
-            // Format timestamp based on timeframe
             const date = new Date(timestamp || val);
 
             if (timeframe === '1D') {
@@ -128,14 +119,12 @@ export const ComparisonPriceChart: React.FC<ComparisonPriceChartProps> = ({
           },
         },
       },
-      xaxis: {
-        type: 'datetime',
-        labels: {
-          datetimeUTC: false,
-          // Fix the formatter function signature to match the expected type
-          formatter: function (value: string, timestamp?: number) {
-            // ApexCharts sometimes provides the timestamp as a string, so we need to ensure it's a number
-            const date = new Date(timestamp || Number(value));
+              xaxis: {
+          type: 'datetime',
+          labels: {
+            datetimeUTC: false,
+            formatter: function (value: string, timestamp?: number) {
+              const date = new Date(timestamp || Number(value));
 
             if (timeframe === '1D') {
               return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -156,7 +145,6 @@ export const ComparisonPriceChart: React.FC<ComparisonPriceChartProps> = ({
       },
     };
 
-    // Specific options based on chart type
     if (chartType === 'percent') {
       return {
         ...baseOptions,
@@ -196,7 +184,6 @@ export const ComparisonPriceChart: React.FC<ComparisonPriceChartProps> = ({
     }
   }, [chartType, timeframe]);
 
-  // Chart series
   const chartSeries = useMemo(() => {
     return stockData.map(stock => ({
       name: stock.symbol,

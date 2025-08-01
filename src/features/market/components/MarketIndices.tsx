@@ -45,19 +45,15 @@ export const MarketIndices = () => {
                   },
                 }}
               >
-                {/* Index Name */}
                 <Typography variant="body2" fontWeight={500}>
                   {index.name}
                 </Typography>
 
-                {/* Value and Change */}
                 <Box sx={{ textAlign: 'right' }}>
-                  {/* Current Value */}
                   <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.25 }}>
                     {formatIndexPrice(index.price)}
                   </Typography>
 
-                  {/* Change Amount and Percent */}
                   <Typography
                     variant="body2"
                     sx={{

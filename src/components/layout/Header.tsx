@@ -1,5 +1,3 @@
-// src/components/layout/Header.tsx
-
 import { toggleTheme } from '@features/theme/themeSlice';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
@@ -19,11 +17,13 @@ import {
 import { useCallback, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { AuthStatus } from '@/features/auth/components/AuthStatus'; // Import the AuthStatus component
+import { AuthStatus } from '@/features/auth/components/AuthStatus';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 
-// Navigation items - updated to conditionally require auth
+/**
+ * Navigation items with conditional authentication requirements
+ */
 const navItems = [
   { label: 'Market Overview', path: '/', requiresAuth: false },
   { label: 'Stocks', path: '/stocks', requiresAuth: false },
@@ -38,13 +38,11 @@ export const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { mode } = useAppSelector(state => state.theme);
-  const { currentUser } = useAuth(); // Get auth state from context
+  const { currentUser } = useAuth();
 
-  // Mobile menu state
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(null);
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  // Handle mobile menu open/close
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMobileMenuAnchor(event.currentTarget);
   };
@@ -53,23 +51,19 @@ export const Header = () => {
     setMobileMenuAnchor(null);
   };
 
-  // Handle navigation
   const handleNavigation = (path: string) => {
     navigate(path);
     handleMobileMenuClose();
   };
 
-  // Handle theme toggle
   const handleThemeToggle = () => {
     dispatch(toggleTheme());
   };
 
-  // Filter nav items based on auth status
   const filteredNavItems = navItems.filter(
     item => !item.requiresAuth || (item.requiresAuth && currentUser)
   );
 
-  // Render navigation items
   const renderNavItems = useCallback(() => {
     return filteredNavItems.map(item => {
       const isActive =
@@ -106,39 +100,32 @@ export const Header = () => {
       sx={{ borderBottom: 1, borderColor: 'divider' }}
     >
       <Toolbar sx={{ height: 64 }}>
-        {/* Logo Only */}
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
             cursor: 'pointer',
-            py: 1, // Add padding to give logo more space
+            py: 1,
           }}
           onClick={() => handleNavigation('/')}
         >
           <img src="/logo.svg" alt="MarketLens Logo" style={{ height: '42px', width: '42px' }} />
         </Box>
 
-        {/* Spacer to push navigation to right */}
         <Box sx={{ flexGrow: 1 }} />
 
-        {/* Desktop Navigation - now on the right */}
         {!isMobile && <Box sx={{ display: 'flex' }}>{renderNavItems()}</Box>}
 
-        {/* Vertical Divider */}
         {!isMobile && <Divider orientation="vertical" flexItem sx={{ mx: 2, my: 1.5 }} />}
 
-        {/* Theme Toggle */}
         <IconButton color="inherit" onClick={handleThemeToggle} sx={{ ml: 1 }} size="small">
           {mode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
         </IconButton>
 
-        {/* AuthStatus - Replace User Account button */}
         <Box sx={{ ml: 2 }}>
           <AuthStatus />
         </Box>
 
-        {/* Mobile Menu Icon */}
         {isMobile && (
           <IconButton
             color="inherit"
@@ -152,7 +139,6 @@ export const Header = () => {
           </IconButton>
         )}
 
-        {/* Mobile Menu */}
         <Menu
           anchorEl={mobileMenuAnchor}
           open={Boolean(mobileMenuAnchor)}

@@ -5,7 +5,6 @@ interface ThemeState {
   mode: PaletteMode;
 }
 
-// Get the initial theme from localStorage or default to 'light'
 const getInitialTheme = (): PaletteMode => {
   if (typeof window !== 'undefined') {
     const savedTheme = localStorage.getItem('theme');
@@ -13,7 +12,6 @@ const getInitialTheme = (): PaletteMode => {
       return savedTheme;
     }
 
-    // Check if user prefers dark mode
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       return 'dark';
     }
@@ -33,7 +31,6 @@ const themeSlice = createSlice({
     toggleTheme: state => {
       state.mode = state.mode === 'light' ? 'dark' : 'light';
 
-      // Save to localStorage
       if (typeof window !== 'undefined') {
         localStorage.setItem('theme', state.mode);
       }
@@ -41,7 +38,6 @@ const themeSlice = createSlice({
     setTheme: (state, action: PayloadAction<PaletteMode>) => {
       state.mode = action.payload;
 
-      // Save to localStorage
       if (typeof window !== 'undefined') {
         localStorage.setItem('theme', action.payload);
       }

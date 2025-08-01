@@ -19,10 +19,8 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<void>;
 }
 
-// Create the context with a default value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Hook to use the auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -31,28 +29,23 @@ export const useAuth = () => {
   return context;
 };
 
-// Props for the AuthProvider component
 interface AuthProviderProps {
   children: React.ReactNode;
 }
 
-// Provider component
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Effect to subscribe to auth state changes
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges(user => {
       setCurrentUser(user);
       setLoading(false);
     });
 
-    // Cleanup subscription on unmount
     return unsubscribe;
   }, []);
 
-  // Auth functions
   const signIn = async (email: string, password: string): Promise<User> => {
     return firebaseSignInWithEmail(email, password);
   };
@@ -73,7 +66,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return resetPassword(email);
   };
 
-  // Value for the context provider
   const value: AuthContextType = {
     currentUser,
     loading,

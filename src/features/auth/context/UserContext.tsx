@@ -1,4 +1,3 @@
-// src/features/auth/context/UserContext.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 import {
@@ -36,7 +35,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Function to refresh user profile
   const refreshUserProfile = async () => {
     if (!currentUser) {
       setUserProfile(null);
@@ -52,7 +50,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
   };
 
-  // Subscribe to user profile changes
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
 
@@ -66,12 +63,10 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       setLoading(true);
       setError(null);
 
-      // Create or update user profile in Firestore
       createUserProfile(currentUser).catch(err => {
         console.error('Error creating/updating user profile:', err);
       });
 
-      // Subscribe to real-time updates
       unsubscribe = subscribeToUserProfile(currentUser.uid, profile => {
         setUserProfile(profile);
         setLoading(false);
@@ -80,7 +75,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
     subscribeToProfile();
 
-    // Cleanup subscription
     return () => {
       if (unsubscribe) {
         unsubscribe();

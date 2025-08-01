@@ -1,5 +1,3 @@
-// src/features/watchlist/components/WatchListCard.tsx
-
 import {
   MoreVert as MoreVertIcon,
   TrendingDown as TrendingDownIcon,
@@ -24,7 +22,6 @@ import { Watchlist, WatchlistWithMarketData } from '../models';
 
 import { financialColors } from '@/theme';
 
-// Component props interface
 interface WatchlistCardProps {
   readonly watchlist: Watchlist | WatchlistWithMarketData;
   readonly onEdit?: (watchlist: Watchlist) => void;
@@ -32,7 +29,6 @@ interface WatchlistCardProps {
   readonly showMarketData?: boolean;
 }
 
-// Type guard to check if watchlist has market data
 const hasMarketData = (
   watchlist: Watchlist | WatchlistWithMarketData
 ): watchlist is WatchlistWithMarketData => {
@@ -79,7 +75,6 @@ export const WatchlistCard: React.FC<WatchlistCardProps> = React.memo(
       }).format(date);
     }, []);
 
-    // Calculate summary statistics for display
     const getSummaryStats = useCallback(() => {
       if (!showMarketData || !hasMarketData(watchlist) || !watchlist.watchlistItems) {
         return null;
@@ -94,12 +89,10 @@ export const WatchlistCard: React.FC<WatchlistCardProps> = React.memo(
       const losers = items.filter(item => item.change < 0);
       const avgChange = items.reduce((sum, item) => sum + item.changePercent, 0) / items.length;
 
-      // Find top performer
       const topPerformer = items.reduce((top, item) =>
         item.changePercent > top.changePercent ? item : top
       );
 
-      // Find worst performer
       const worstPerformer = items.reduce((worst, item) =>
         item.changePercent < worst.changePercent ? item : worst
       );

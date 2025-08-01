@@ -1,4 +1,4 @@
-// src/features/auth/pages/AccountPage.tsx
+
 import { AccountSettings } from '@features/auth/components/AccountSettings';
 import { ProfileEditForm } from '@features/auth/components/ProfileEditForm';
 import { SecuritySettings } from '@features/auth/components/SecuritySettings';
@@ -45,23 +45,16 @@ export const AccountPage: React.FC = () => {
   const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0); // Add this to force refresh
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
-    // The useAuth hook should automatically refresh the currentUser
-    // when changes occur, so we don't need additional logic here.
-    // The dependency on refreshTrigger ensures this effect runs
-    // after profile updates.
-
     console.log('User data refreshed');
   }, [refreshTrigger]);
 
-  // Handle tab change
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
 
-  // Calculate when the user joined
   const joinedDate = currentUser?.metadata?.creationTime
     ? new Date(currentUser.metadata.creationTime).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -156,7 +149,6 @@ export const AccountPage: React.FC = () => {
                     onCancel={() => setIsEditing(false)}
                     onSuccess={() => {
                       setIsEditing(false);
-                      // Force component refresh to show updated profile
                       setRefreshTrigger(prev => prev + 1);
                     }}
                   />
@@ -182,7 +174,6 @@ export const AccountPage: React.FC = () => {
   );
 };
 
-// Profile Information Display
 const ProfileInfo: React.FC = () => {
   const { currentUser } = useAuth();
 

@@ -1,6 +1,5 @@
 import { createTheme, Theme, PaletteMode } from '@mui/material';
 
-// Custom colors for financial data
 export const financialColors = {
   // Market data colors
   positive: '#00897B', // Green for positive changes
@@ -20,13 +19,11 @@ export const financialColors = {
   },
 };
 
-// Custom theme tokens
 const getDesignTokens = (mode: PaletteMode) => ({
   palette: {
     mode,
     ...(mode === 'light'
       ? {
-          // Light mode
           primary: {
             main: financialColors.primary,
           },
@@ -43,7 +40,6 @@ const getDesignTokens = (mode: PaletteMode) => ({
           },
         }
       : {
-          // Dark mode
           primary: {
             main: '#4B94EA', // Lighter blue for dark mode
           },
@@ -97,12 +93,9 @@ const getDesignTokens = (mode: PaletteMode) => ({
   },
 });
 
-// Create theme function that uses the current mode
 export const createAppTheme = (mode: PaletteMode): Theme => {
-  // First create a base theme with the design tokens
   const baseTheme = createTheme(getDesignTokens(mode));
 
-  // Then augment the theme with component overrides
   return createTheme(baseTheme, {
     components: {
       MuiAppBar: {

@@ -8,14 +8,12 @@ import {
   updatePortfolio,
 } from '../services/portfolioService';
 
-// Context state interface
 interface PortfolioState {
   portfolios: Portfolio[];
   isLoading: boolean;
   error: string | null;
 }
 
-// Context actions interface
 interface PortfolioActions {
   createPortfolio: (userId: string, portfolioData: CreatePortfolioData) => Promise<Portfolio>;
   loadUserPortfolios: (userId: string) => Promise<void>;
@@ -25,18 +23,14 @@ interface PortfolioActions {
   refreshPortfolios: (userId: string) => Promise<void>;
 }
 
-// Combined context interface
 interface PortfolioContextType extends PortfolioState, PortfolioActions {}
 
-// Create the context
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
 
-// Provider props interface
 interface PortfolioProviderProps {
   readonly children: ReactNode;
 }
 
-// Portfolio Provider component
 export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }) => {
   const [state, setState] = useState<PortfolioState>({
     portfolios: [],
@@ -44,12 +38,10 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
     error: null,
   });
 
-  // Helper function to update state
   const updateState = useCallback((updates: Partial<PortfolioState>) => {
     setState(prev => ({ ...prev, ...updates }));
   }, []);
 
-  // Create a new portfolio
   const createPortfolio = useCallback(
     async (userId: string, portfolioData: CreatePortfolioData): Promise<Portfolio> => {
       updateState({ isLoading: true, error: null });
@@ -57,7 +49,6 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
       try {
         const newPortfolio = await addPortfolio(userId, portfolioData);
 
-        // Add to local state
         setState(prev => ({
           ...prev,
           portfolios: [newPortfolio, ...prev.portfolios],
@@ -74,7 +65,6 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
     [updateState]
   );
 
-  // Load user's portfolios
   const loadUserPortfolios = useCallback(
     async (userId: string): Promise<void> => {
       updateState({ isLoading: true, error: null });
@@ -90,7 +80,6 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
     [updateState]
   );
 
-  // Update an existing portfolio
   const editPortfolio = useCallback(
     async (portfolioId: string, updateData: UpdatePortfolioData): Promise<void> => {
       updateState({ isLoading: true, error: null });
@@ -98,7 +87,6 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
       try {
         await updatePortfolio(portfolioId, updateData);
 
-        // Update local state
         setState(prev => ({
           ...prev,
           portfolios: prev.portfolios.map(portfolio =>
@@ -117,7 +105,6 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
     [updateState]
   );
 
-  // Delete a portfolio
   const removePortfolio = useCallback(
     async (portfolioId: string): Promise<void> => {
       updateState({ isLoading: true, error: null });
@@ -125,7 +112,6 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
       try {
         await deletePortfolio(portfolioId);
 
-        // Remove from local state
         setState(prev => ({
           ...prev,
           portfolios: prev.portfolios.filter(portfolio => portfolio.id !== portfolioId),
@@ -140,12 +126,10 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
     [updateState]
   );
 
-  // Clear any error state
   const clearError = useCallback(() => {
     updateState({ error: null });
   }, [updateState]);
 
-  // Refresh portfolios (re-fetch from Firestore)
   const refreshPortfolios = useCallback(
     async (userId: string): Promise<void> => {
       await loadUserPortfolios(userId);
@@ -153,13 +137,10 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
     [loadUserPortfolios]
   );
 
-  // Context value
   const contextValue: PortfolioContextType = {
-    // State
     portfolios: state.portfolios,
     isLoading: state.isLoading,
     error: state.error,
-    // Actions
     createPortfolio,
     loadUserPortfolios,
     editPortfolio,
@@ -171,7 +152,6 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
   return <PortfolioContext.Provider value={contextValue}>{children}</PortfolioContext.Provider>;
 };
 
-// Custom hook to use the Portfolio context
 export const usePortfolio = (): PortfolioContextType => {
   const context = useContext(PortfolioContext);
 
@@ -182,7 +162,6 @@ export const usePortfolio = (): PortfolioContextType => {
   return context;
 };
 
-// Helper hook to get a specific portfolio by ID
 export const usePortfolioById = (portfolioId: string): Portfolio | undefined => {
   const { portfolios } = usePortfolio();
   return portfolios.find(portfolio => portfolio.id === portfolioId);

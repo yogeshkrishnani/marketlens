@@ -36,14 +36,10 @@ export const POPULAR_STOCK_SYMBOLS = [
   'JNJ',
 ];
 
-// Extended API with financial endpoints
 export const financialApi = api.injectEndpoints({
   endpoints: builder => ({
-    // Get major market indices
     getMarketIndices: builder.query<MarketIndex[], void>({
       query: () => {
-        // Use ETFs that track major indices instead of index symbols
-        // SPY (S&P 500), QQQ (Nasdaq), DIA (Dow Jones), IWM (Russell 2000)
         return `/quote/SPY,QQQ,DIA,IWM?apikey=${FMP_API_KEY}`;
       },
       transformResponse: (response: any) => {
@@ -52,7 +48,6 @@ export const financialApi = api.injectEndpoints({
       providesTags: [ApiTagTypes.MARKET_DATA],
     }),
 
-    // Get sector performance
     getSectorPerformance: builder.query<SectorPerformance[], void>({
       query: () => {
         return `/sector-performance?apikey=${FMP_API_KEY}`;
@@ -68,7 +63,6 @@ export const financialApi = api.injectEndpoints({
         return `/stock_market/gainers?apikey=${FMP_API_KEY}`;
       },
       async transformResponse(gainersResponse: any) {
-        // We need to make a second call for losers
         const losersUrl = `${FMP_BASE_URL}/stock_market/losers?apikey=${FMP_API_KEY}`;
         const losersResponse = await fetch(losersUrl).then(res => res.json());
 
@@ -79,7 +73,6 @@ export const financialApi = api.injectEndpoints({
 
     searchStocks: builder.query<StockSearchResult[], string>({
       query: query => {
-        // Skip empty queries
         if (!query || query.trim().length < 2) {
           return { url: '', method: 'get' };
         }
@@ -87,9 +80,7 @@ export const financialApi = api.injectEndpoints({
         return `/search?query=${encodeURIComponent(query)}&limit=10&apikey=${FMP_API_KEY}`;
       },
 
-      // Transform the response
       transformResponse: (response: any) => {
-        // Check if response is valid
         if (!Array.isArray(response)) {
           console.error('Invalid search response format:', response);
           return [];
@@ -98,13 +89,11 @@ export const financialApi = api.injectEndpoints({
         return transformStockSearchResults(response);
       },
 
-      // Keep data for 1 minute
       keepUnusedDataFor: 60,
     }),
 
     getPopularStocks: builder.query<StockQuote[], void>({
       query: () => {
-        // Create a comma-separated list of popular stock symbols
         const symbols = POPULAR_STOCK_SYMBOLS.join(',');
         return `/quote/${symbols}?apikey=${FMP_API_KEY}`;
       },
@@ -112,11 +101,9 @@ export const financialApi = api.injectEndpoints({
         return transformStockQuotes(response);
       },
       providesTags: [ApiTagTypes.STOCK_DATA],
-      // Keep data fresh for 5 minutes
       keepUnusedDataFor: 300,
     }),
 
-    // Get detailed quote information for a specific stock
     getStockQuote: builder.query<StockDetailQuote, string>({
       query: symbol => {
         if (!symbol) {
@@ -125,7 +112,6 @@ export const financialApi = api.injectEndpoints({
         return `/quote/${encodeURIComponent(symbol)}?apikey=${FMP_API_KEY}`;
       },
       transformResponse: (response: any) => {
-        // API returns an array with a single object
         if (Array.isArray(response) && response.length > 0) {
           return transformStockDetailQuote(response[0]);
         }
@@ -133,10 +119,9 @@ export const financialApi = api.injectEndpoints({
       },
       providesTags: (result, _error, symbol) =>
         result ? [{ type: ApiTagTypes.STOCK_DATA, id: symbol }] : [ApiTagTypes.STOCK_DATA],
-      keepUnusedDataFor: 300, // 5 minutes
+      keepUnusedDataFor: 300,
     }),
 
-    // Get company profile data
     getCompanyProfile: builder.query<CompanyProfile, string>({
       query: symbol => {
         if (!symbol) {
@@ -145,7 +130,6 @@ export const financialApi = api.injectEndpoints({
         return `/profile/${encodeURIComponent(symbol)}?apikey=${FMP_API_KEY}`;
       },
       transformResponse: (response: any) => {
-        // API returns an array with a single object
         if (Array.isArray(response) && response.length > 0) {
           return transformCompanyProfile(response[0]);
         }
@@ -155,10 +139,9 @@ export const financialApi = api.injectEndpoints({
         result
           ? [{ type: ApiTagTypes.STOCK_DATA, id: `${symbol}-profile` }]
           : [ApiTagTypes.STOCK_DATA],
-      keepUnusedDataFor: 3600, // 1 hour (company data changes less frequently)
+      keepUnusedDataFor: 3600,
     }),
 
-    // Get historical price data with customizable timeframe
     getHistoricalPrices: builder.query<HistoricalPrice[], { symbol: string; timeframe: Timeframe }>(
       {
         query: ({ symbol, timeframe }) => {
@@ -166,35 +149,27 @@ export const financialApi = api.injectEndpoints({
             throw new Error('Stock symbol is required');
           }
 
-          // Determine the appropriate endpoint based on timeframe
           let endpoint;
           switch (timeframe) {
             case '1D':
-              // Intraday data for 1 day (1-minute intervals)
               endpoint = `/historical-chart/1min/${encodeURIComponent(symbol)}?apikey=${FMP_API_KEY}`;
               break;
             case '5D':
-              // Intraday data for 5 days (5-minute intervals)
               endpoint = `/historical-chart/5min/${encodeURIComponent(symbol)}?apikey=${FMP_API_KEY}`;
               break;
             case '1M':
-              // Daily data for 1 month
               endpoint = `/historical-price-full/${encodeURIComponent(symbol)}?timeseries=30&apikey=${FMP_API_KEY}`;
               break;
             case '3M':
-              // Daily data for 3 months
               endpoint = `/historical-price-full/${encodeURIComponent(symbol)}?timeseries=90&apikey=${FMP_API_KEY}`;
               break;
             case '1Y':
-              // Daily data for 1 year
               endpoint = `/historical-price-full/${encodeURIComponent(symbol)}?timeseries=365&apikey=${FMP_API_KEY}`;
               break;
             case '5Y':
-              // Daily data for 5 years
               endpoint = `/historical-price-full/${encodeURIComponent(symbol)}?timeseries=1825&apikey=${FMP_API_KEY}`;
               break;
             default:
-              // Default to 1 month
               endpoint = `/historical-price-full/${encodeURIComponent(symbol)}?timeseries=30&apikey=${FMP_API_KEY}`;
           }
 
@@ -202,13 +177,11 @@ export const financialApi = api.injectEndpoints({
         },
         transformResponse: (response: any, _meta, arg) => {
           if (arg.timeframe === '1D' || arg.timeframe === '5D') {
-            // Intraday data format
             if (!Array.isArray(response)) {
               throw new Error('Invalid intraday price data format');
             }
             return transformIntradayPrices(response);
           } else {
-            // Daily data format
             if (!response || !response.historical || !Array.isArray(response.historical)) {
               throw new Error('Invalid historical price data format');
             }
@@ -219,11 +192,10 @@ export const financialApi = api.injectEndpoints({
           result
             ? [{ type: ApiTagTypes.STOCK_DATA, id: `${arg.symbol}-${arg.timeframe}` }]
             : [ApiTagTypes.STOCK_DATA],
-        keepUnusedDataFor: 300, // 5 minutes
+        keepUnusedDataFor: 300,
       }
     ),
 
-    // Get key financial metrics
     getKeyMetrics: builder.query<KeyMetrics, string>({
       query: symbol => {
         if (!symbol) {
@@ -232,7 +204,6 @@ export const financialApi = api.injectEndpoints({
         return `/key-metrics/${encodeURIComponent(symbol)}?limit=1&apikey=${FMP_API_KEY}`;
       },
       transformResponse: (response: any) => {
-        // API returns an array with metrics objects
         if (Array.isArray(response) && response.length > 0) {
           return transformKeyMetrics(response[0]);
         }
@@ -242,7 +213,7 @@ export const financialApi = api.injectEndpoints({
         result
           ? [{ type: ApiTagTypes.STOCK_DATA, id: `${symbol}-metrics` }]
           : [ApiTagTypes.STOCK_DATA],
-      keepUnusedDataFor: 3600, // 1 hour
+      keepUnusedDataFor: 3600,
     }),
 
     getBatchStockQuotes: builder.query<StockDetailQuote[], string[]>({
@@ -260,7 +231,6 @@ export const financialApi = api.injectEndpoints({
   }),
 });
 
-// Export hooks for usage in components
 export const {
   useGetBatchStockQuotesQuery,
   useGetCompanyProfileQuery,

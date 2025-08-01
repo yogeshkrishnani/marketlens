@@ -31,10 +31,9 @@ export const ComparisonDrawer: React.FC<ComparisonDrawerProps> = ({ open, onClos
   const navigate = useNavigate();
 
   const handleCompare = () => {
-    // Create URL with symbols for comparison page
     const symbols = comparisonList.map(stock => stock.symbol).join(',');
     navigate(`/comparison?symbols=${symbols}`);
-    onClose(); // Close drawer after navigation
+    onClose();
   };
 
   return (
@@ -108,11 +107,9 @@ export const ComparisonDrawer: React.FC<ComparisonDrawerProps> = ({ open, onClos
   );
 };
 
-// Also create a floating action button to open the drawer
 export const ComparisonFab: React.FC<{ onClick: () => void }> = ({ onClick }) => {
   const { comparisonList } = useComparison();
 
-  // Only show if we have at least one stock in comparison
   if (comparisonList.length === 0) {
     return null;
   }

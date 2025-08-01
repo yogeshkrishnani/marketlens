@@ -16,7 +16,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { currentUser, loading } = useAuth();
   const location = useLocation();
 
-  // Show loading indicator while checking authentication
   if (loading) {
     return (
       <Box
@@ -27,12 +26,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Redirect to login if not authenticated
   if (!currentUser) {
-    // Remember where the user was trying to go
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
-  // Render children if authenticated
   return <>{children}</>;
 };

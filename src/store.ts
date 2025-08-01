@@ -13,7 +13,6 @@ export const store = configureStore({
   devTools: true,
 });
 
-// Enable refetchOnFocus/refetchOnReconnect features
 setupListeners(store.dispatch);
 
 export type RootState = ReturnType<typeof store.getState>;

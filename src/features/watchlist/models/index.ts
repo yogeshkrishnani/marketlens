@@ -1,36 +1,29 @@
-// src/features/watchlist/models/index.ts
-
-// Core watchlist interface
 export interface Watchlist {
   readonly id: string;
   readonly name: string;
   readonly userId: string;
-  readonly symbols: string[]; // Array of stock symbols: ["AAPL", "GOOGL", "TSLA"]
+  readonly symbols: string[];
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
 
-// Interface for creating a new watchlist
 export interface CreateWatchlistData {
   readonly name: string;
-  readonly symbols?: string[]; // Optional initial symbols
+  readonly symbols?: string[];
 }
 
-// Interface for updating an existing watchlist
 export interface UpdateWatchlistData {
   readonly name?: string;
-  readonly symbols?: string[]; // Complete replacement of symbols array
+  readonly symbols?: string[];
 }
 
-// Enhanced watchlist with real-time market data
 export interface WatchlistWithMarketData extends Watchlist {
   readonly watchlistItems: WatchlistItem[];
-  readonly totalValue?: number; // Optional: if we want to show total value
-  readonly topPerformer?: WatchlistItem; // Best performing stock
-  readonly worstPerformer?: WatchlistItem; // Worst performing stock
+  readonly totalValue?: number;
+  readonly topPerformer?: WatchlistItem;
+  readonly worstPerformer?: WatchlistItem;
 }
 
-// Individual stock item within a watchlist with market data
 export interface WatchlistItem {
   readonly symbol: string;
   readonly name: string;
@@ -43,7 +36,6 @@ export interface WatchlistItem {
   readonly dayLow?: number;
 }
 
-// Summary statistics for a watchlist
 export interface WatchlistSummary {
   readonly symbolCount: number;
   readonly avgChange: number;
@@ -54,21 +46,18 @@ export interface WatchlistSummary {
   readonly topLoser: string | null;
 }
 
-// Interface for adding/removing symbols from watchlist
 export interface WatchlistSymbolOperation {
   readonly watchlistId: string;
   readonly symbol: string;
 }
 
-// Watchlist preferences/settings
 export interface WatchlistSettings {
   readonly sortBy: 'symbol' | 'change' | 'changePercent' | 'price' | 'volume';
   readonly sortOrder: 'asc' | 'desc';
-  readonly refreshInterval: number; // in seconds
+  readonly refreshInterval: number;
   readonly showExtendedHours: boolean;
 }
 
-// Error types for watchlist operations
 export interface WatchlistError {
   readonly code:
     | 'NOT_FOUND'
@@ -80,10 +69,9 @@ export interface WatchlistError {
   readonly details?: Record<string, unknown>;
 }
 
-// Form validation interfaces
 export interface CreateWatchlistFormData {
   name: string;
-  initialSymbols: string; // Comma-separated string for input
+  initialSymbols: string;
 }
 
 export interface CreateWatchlistFormErrors {
@@ -91,7 +79,6 @@ export interface CreateWatchlistFormErrors {
   initialSymbols?: string;
 }
 
-// Constants for validation and limits
 export const WATCHLIST_CONSTRAINTS = {
   MAX_NAME_LENGTH: 50,
   MIN_NAME_LENGTH: 1,
@@ -100,10 +87,8 @@ export const WATCHLIST_CONSTRAINTS = {
   SYMBOL_REGEX: /^[A-Z]{1,5}$/,
 } as const;
 
-// Helper type for watchlist operations
 export type WatchlistOperation = 'create' | 'update' | 'delete' | 'addSymbol' | 'removeSymbol';
 
-// Type guards for runtime type checking
 export const isValidWatchlist = (obj: unknown): obj is Watchlist => {
   if (!obj || typeof obj !== 'object' || obj === null) {
     return false;
@@ -152,10 +137,8 @@ export const isValidWatchlistName = (name: string): boolean => {
   );
 };
 
-// Utility type for watchlist display states
 export type WatchlistDisplayState = 'loading' | 'loaded' | 'error' | 'empty';
 
-// Interface for bulk operations
 export interface BulkWatchlistOperation {
   readonly operation: 'add' | 'remove';
   readonly watchlistId: string;

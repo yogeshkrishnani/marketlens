@@ -1,5 +1,3 @@
-// src/features/watchlist/pages/WatchlistPage.tsx
-
 import {
   Add as AddIcon,
   Refresh as RefreshIcon,
@@ -39,13 +37,11 @@ export const WatchlistPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
 
-  // Get all unique symbols across user's watchlists for batch quote
   const allSymbols = useMemo(() => {
     const symbols = watchlists.flatMap(watchlist => watchlist.symbols);
-    return [...new Set(symbols)]; // Remove duplicates
+    return [...new Set(symbols)];
   }, [watchlists]);
 
-  // Use RTK Query to fetch real-time stock quotes for all symbols
   const {
     data: stockQuotes,
     isLoading: isPriceLoading,
@@ -53,10 +49,9 @@ export const WatchlistPage: React.FC = () => {
     refetch: refetchPrices,
   } = useGetBatchStockQuotesQuery(allSymbols, {
     skip: allSymbols.length === 0,
-    pollingInterval: 30000, // Auto-refresh every 30 seconds
+    pollingInterval: 30000,
   });
 
-  // Transform watchlists with market data
   const watchlistsWithMarketData = useMemo((): WatchlistWithMarketData[] => {
     if (!stockQuotes || stockQuotes.length === 0) {
       return watchlists.map(watchlist => ({
@@ -65,14 +60,12 @@ export const WatchlistPage: React.FC = () => {
       }));
     }
 
-    // Create quotes lookup
     const quotesLookup: Record<string, any> = {};
     stockQuotes.forEach(quote => {
       quotesLookup[quote.symbol] = quote;
     });
 
     return watchlists.map(watchlist => {
-      // Map symbols to WatchlistItems, filtering out null values
       const watchlistItems: WatchlistItem[] = watchlist.symbols
         .map(symbol => {
           const quote = quotesLookup[symbol];
@@ -80,7 +73,6 @@ export const WatchlistPage: React.FC = () => {
             return null;
           }
 
-          // Create WatchlistItem with proper typing
           const item: WatchlistItem = {
             symbol: quote.symbol as string,
             name: (quote.name as string) || quote.symbol,
@@ -88,7 +80,6 @@ export const WatchlistPage: React.FC = () => {
             change: Number(quote.change) || 0,
             changePercent: Number(quote.changePercent) || 0,
             volume: Number(quote.volume) || 0,
-            // Handle optional properties properly
             ...(quote.marketCap !== undefined &&
               quote.marketCap !== null && { marketCap: Number(quote.marketCap) }),
             ...(quote.dayHigh !== undefined &&
@@ -108,7 +99,6 @@ export const WatchlistPage: React.FC = () => {
     });
   }, [watchlists, stockQuotes]);
 
-  // Load watchlists
   const loadWatchlists = useCallback(async () => {
     if (!currentUser?.uid) return;
 
@@ -126,17 +116,14 @@ export const WatchlistPage: React.FC = () => {
     }
   }, [currentUser?.uid]);
 
-  // Load watchlists when component mounts
   useEffect(() => {
     loadWatchlists();
   }, [loadWatchlists]);
 
-  // Handle watchlist creation
   const handleCreateWatchlist = useCallback(() => {
     navigate('/watchlists/create');
   }, [navigate]);
 
-  // Handle watchlist edit
   const handleEditWatchlist = useCallback(
     (watchlist: Watchlist) => {
       navigate(`/watchlists/${watchlist.id}/edit`);
@@ -144,7 +131,6 @@ export const WatchlistPage: React.FC = () => {
     [navigate]
   );
 
-  // Handle watchlist deletion
   const handleDeleteWatchlist = useCallback(
     async (watchlistId: string) => {
       const watchlist = watchlists.find(w => w.id === watchlistId);
@@ -162,7 +148,6 @@ export const WatchlistPage: React.FC = () => {
       try {
         await deleteWatchlist(watchlistId);
 
-        // Remove from local state
         setWatchlists(prev => prev.filter(w => w.id !== watchlistId));
       } catch (err) {
         console.error('Failed to delete watchlist:', err);
@@ -175,7 +160,6 @@ export const WatchlistPage: React.FC = () => {
     [watchlists]
   );
 
-  // Handle refresh
   const handleRefresh = useCallback(() => {
     loadWatchlists();
     if (allSymbols.length > 0) {
@@ -183,12 +167,10 @@ export const WatchlistPage: React.FC = () => {
     }
   }, [loadWatchlists, allSymbols.length, refetchPrices]);
 
-  // Clear error
   const clearError = useCallback(() => {
     setError(null);
   }, []);
 
-  // Show loading state
   if (isLoading && watchlists.length === 0) {
     return (
       <Box
@@ -297,7 +279,6 @@ export const WatchlistPage: React.FC = () => {
           ))}
         </Grid>
       ) : (
-        // Empty state
         <Paper
           sx={{
             p: 6,

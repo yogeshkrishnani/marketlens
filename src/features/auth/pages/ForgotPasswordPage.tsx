@@ -1,4 +1,4 @@
-// src/features/auth/pages/ForgotPasswordPage.tsx
+
 import {
   Alert,
   Box,

@@ -1,5 +1,3 @@
-// src/features/watchlist/components/EditWatchlistForm.tsx
-
 import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from '@mui/icons-material';
 import {
   Alert,
@@ -24,16 +22,14 @@ import { getWatchlistById, updateWatchlist } from '../services/watchlistService'
 
 import { useAuth } from '@/features/auth/context/AuthContext';
 
-// Form validation interface
 interface FormErrors {
   name?: string;
   symbols?: string;
 }
 
-// Form data interface
 interface FormData {
   name: string;
-  symbols: string; // Comma-separated string for input
+  symbols: string;
 }
 
 export const EditWatchlistForm: React.FC = () => {
@@ -41,7 +37,6 @@ export const EditWatchlistForm: React.FC = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  // Form state
   const [formData, setFormData] = useState<FormData>({
     name: '',
     symbols: '',
@@ -53,7 +48,6 @@ export const EditWatchlistForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [watchlistName, setWatchlistName] = useState<string>('');
 
-  // Load watchlist data on mount
   useEffect(() => {
     const loadWatchlist = async () => {
       if (!watchlistId) {
@@ -69,13 +63,11 @@ export const EditWatchlistForm: React.FC = () => {
           return;
         }
 
-        // Verify ownership
         if (watchlist.userId !== currentUser?.uid) {
           setError('You do not have permission to edit this watchlist');
           return;
         }
 
-        // Populate form with current data
         setFormData({
           name: watchlist.name,
           symbols: watchlist.symbols.join(', '),
@@ -92,7 +84,6 @@ export const EditWatchlistForm: React.FC = () => {
     loadWatchlist();
   }, [watchlistId, currentUser?.uid]);
 
-  // Parse symbols from input string
   const parseSymbols = useCallback((symbolsString: string): string[] => {
     if (!symbolsString.trim()) return [];
 
@@ -100,21 +91,18 @@ export const EditWatchlistForm: React.FC = () => {
       .split(',')
       .map(s => s.trim().toUpperCase())
       .filter(s => s.length > 0 && isValidSymbol(s))
-      .filter((symbol, index, array) => array.indexOf(symbol) === index); // Remove duplicates
+      .filter((symbol, index, array) => array.indexOf(symbol) === index);
   }, []);
 
-  // Validate form data
   const validateForm = useCallback((data: FormData): FormErrors => {
     const errors: FormErrors = {};
 
-    // Name validation
     if (!data.name.trim()) {
       errors.name = 'Watchlist name is required';
     } else if (!isValidWatchlistName(data.name.trim())) {
       errors.name = `Name must be between ${WATCHLIST_CONSTRAINTS.MIN_NAME_LENGTH} and ${WATCHLIST_CONSTRAINTS.MAX_NAME_LENGTH} characters`;
     }
 
-    // Symbols validation
     if (data.symbols.trim()) {
       const symbols = data.symbols
         .split(',')
@@ -125,13 +113,11 @@ export const EditWatchlistForm: React.FC = () => {
         errors.symbols = `Maximum ${WATCHLIST_CONSTRAINTS.MAX_SYMBOLS_PER_WATCHLIST} symbols allowed`;
       }
 
-      // Validate each symbol format
       const invalidSymbols = symbols.filter(symbol => !isValidSymbol(symbol));
       if (invalidSymbols.length > 0) {
         errors.symbols = `Invalid symbols: ${invalidSymbols.join(', ')}. Use 1-5 letters only.`;
       }
 
-      // Check for duplicates
       const uniqueSymbols = new Set(symbols);
       if (uniqueSymbols.size !== symbols.length) {
         errors.symbols = 'Duplicate symbols are not allowed';
@@ -141,15 +127,12 @@ export const EditWatchlistForm: React.FC = () => {
     return errors;
   }, []);
 
-  // Handle input changes
   const handleInputChange = useCallback(
     (field: keyof FormData) => {
       return (event: React.ChangeEvent<HTMLInputElement>) => {
         let value = event.target.value;
 
-        // Special handling for symbols field
         if (field === 'symbols') {
-          // Allow letters, commas, and spaces only
           value = value.toUpperCase().replace(/[^A-Z,\s]/g, '');
         }
 
@@ -158,7 +141,6 @@ export const EditWatchlistForm: React.FC = () => {
           [field]: value,
         }));
 
-        // Clear field error when user starts typing
         if (formErrors[field]) {
           setFormErrors(prev => ({
             ...prev,
@@ -166,7 +148,6 @@ export const EditWatchlistForm: React.FC = () => {
           }));
         }
 
-        // Clear global error
         if (error) {
           setError(null);
         }
@@ -175,7 +156,6 @@ export const EditWatchlistForm: React.FC = () => {
     [formErrors, error]
   );
 
-  // Handle form submission
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
@@ -185,7 +165,6 @@ export const EditWatchlistForm: React.FC = () => {
         return;
       }
 
-      // Validate form
       const errors = validateForm(formData);
       setFormErrors(errors);
 
@@ -197,19 +176,15 @@ export const EditWatchlistForm: React.FC = () => {
       setError(null);
 
       try {
-        // Parse symbols
         const symbols = parseSymbols(formData.symbols);
 
-        // Create update data
         const updateData: UpdateWatchlistData = {
           name: formData.name.trim(),
           symbols: symbols,
         };
 
-        // Update watchlist
         await updateWatchlist(watchlistId, updateData);
 
-        // Success - navigate back to watchlists
         navigate('/watchlists');
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to update watchlist';
@@ -221,18 +196,14 @@ export const EditWatchlistForm: React.FC = () => {
     [watchlistId, validateForm, formData, parseSymbols, navigate]
   );
 
-  // Handle cancel action
   const handleCancel = useCallback(() => {
     navigate('/watchlists');
   }, [navigate]);
 
-  // Check if form has changes
   const hasChanges = formData.name.trim() || formData.symbols.trim();
 
-  // Get symbol count for display
   const symbolCount = parseSymbols(formData.symbols).length;
 
-  // Loading state
   if (isLoading) {
     return (
       <Box
@@ -248,7 +219,6 @@ export const EditWatchlistForm: React.FC = () => {
     );
   }
 
-  // Error state
   if (error && !watchlistName) {
     return (
       <Container maxWidth="md">

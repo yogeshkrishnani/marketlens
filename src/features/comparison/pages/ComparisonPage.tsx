@@ -33,41 +33,32 @@ export const ComparisonPage: React.FC = () => {
   const [timeframe, setTimeframe] = useState<Timeframe>('1M');
   const [activeTab, setActiveTab] = useState<number>(0);
 
-  // Ref to track initial render
   const initialRenderRef = useRef(true);
   const urlProcessedRef = useRef(false);
 
-  // State to store historical price data
   const [historicalPrices, setHistoricalPrices] = useState<{ [symbol: string]: HistoricalPrice[] }>(
     {}
   );
   const [isPricesLoading, setIsPricesLoading] = useState(false);
   const [pricesError, setPricesError] = useState<unknown>(null);
 
-  // State to store metrics data
   const [metricsData, setMetricsData] = useState<{ [symbol: string]: KeyMetrics }>({});
   const [isMetricsLoading, setIsMetricsLoading] = useState(false);
   const [metricsError, setMetricsError] = useState<unknown>(null);
 
-  // Parse URL parameters on initial load
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const symbolsParam = useMemo(() => params.get('symbols') || '', [params]);
   const urlSymbols = useMemo(() => symbolsParam.split(',').filter(Boolean), [symbolsParam]);
 
-  // Lazy query for fetching batch quotes - needed for URL symbol resolution
   const [fetchBatchQuotes] = useLazyGetBatchStockQuotesQuery();
 
-  // Process URL symbols on mount
   useEffect(() => {
-    // Only process URL symbols once and only if there are symbols in the URL
     if (!urlProcessedRef.current && urlSymbols.length > 0) {
       const processUrlSymbols = async () => {
         try {
-          // Fetch stock details for the symbols from URL
           const quotesResult = await fetchBatchQuotes(urlSymbols).unwrap();
 
           if (quotesResult && quotesResult.length > 0) {
-            // Convert quote results to ComparisonStock objects
             const stocksToAdd = quotesResult
               .filter((quote: { symbol: string }) => urlSymbols.includes(quote.symbol))
               .map((quote: { symbol: string; name: string }) => ({
@@ -75,7 +66,6 @@ export const ComparisonPage: React.FC = () => {
                 name: quote.name || quote.symbol,
               }));
 
-            // Add all stocks at once with proper colors
             if (stocksToAdd.length > 0) {
               addMultipleStocks(stocksToAdd);
             }
@@ -84,7 +74,6 @@ export const ComparisonPage: React.FC = () => {
           console.error('Error processing URL symbols:', error);
         }
 
-        // Mark URL as processed
         urlProcessedRef.current = true;
       };
 
@@ -92,10 +81,8 @@ export const ComparisonPage: React.FC = () => {
     }
   }, [urlSymbols, fetchBatchQuotes, addMultipleStocks]);
 
-  // Get stock symbols from the comparison list - MEMOIZED to prevent unnecessary recalculations
   const stockSymbols = useMemo(() => comparisonList.map(stock => stock.symbol), [comparisonList]);
 
-  // Fetch quotes for all stocks
   const {
     data: stockQuotes,
     isLoading: isQuotesLoading,
@@ -104,12 +91,10 @@ export const ComparisonPage: React.FC = () => {
     skip: stockSymbols.length === 0,
   });
 
-  // Create lazy queries for historical prices and metrics
   const [fetchHistoricalPrices, { isFetching: isFetchingHistory }] =
     useLazyGetHistoricalPricesQuery();
   const [fetchKeyMetrics, { isFetching: isFetchingMetrics }] = useLazyGetKeyMetricsQuery();
 
-  // Memoized handlers to prevent re-renders
   const handleTimeframeChange = useCallback((newTimeframe: Timeframe) => {
     setTimeframe(newTimeframe);
   }, []);
@@ -125,19 +110,16 @@ export const ComparisonPage: React.FC = () => {
   const updateUrlWithCurrentStocks = useCallback(() => {
     const symbols = comparisonList.map(stock => stock.symbol).join(',');
 
-    // Only update if the symbols changed to avoid unnecessary navigation
     if (symbols !== searchParams.get('symbols')) {
       setSearchParams({ symbols }, { replace: true });
     }
   }, [comparisonList, searchParams, setSearchParams]);
 
   useEffect(() => {
-    // Skip URL update during initial URL processing
     if (urlSymbols.length > 0 && !urlProcessedRef.current) {
       return;
     }
 
-    // Don't update URL if we have no stocks yet
     if (comparisonList.length === 0) {
       return;
     }
@@ -145,25 +127,20 @@ export const ComparisonPage: React.FC = () => {
     updateUrlWithCurrentStocks();
   }, [comparisonList, updateUrlWithCurrentStocks, urlSymbols, urlProcessedRef]);
 
-  // Handle removing a stock from comparison
   const handleRemoveStock = useCallback(
     (symbol: string) => {
       removeFromComparison(symbol);
 
-      // If this was the last stock, navigate back to stocks page
       if (comparisonList.length <= 1) {
         setTimeout(() => navigate('/stocks'), 100);
       } else {
-        // Otherwise update the URL with the new stock list (after stock is removed)
         setTimeout(updateUrlWithCurrentStocks, 0);
       }
     },
     [removeFromComparison, comparisonList.length, navigate, updateUrlWithCurrentStocks]
   );
 
-  // Effect to fetch historical prices when symbols or timeframe changes
   useEffect(() => {
-    // Skip on initial render
     if (initialRenderRef.current) {
       initialRenderRef.current = false;
       return;
@@ -181,7 +158,6 @@ export const ComparisonPage: React.FC = () => {
       let hasError = false;
 
       try {
-        // Fetch historical data for each stock
         await Promise.all(
           stockSymbols.map(async symbol => {
             try {
@@ -226,9 +202,7 @@ export const ComparisonPage: React.FC = () => {
     };
   }, [stockSymbols, timeframe, fetchHistoricalPrices]);
 
-  // Initial fetch of data - happens once when component mounts
   useEffect(() => {
-    // Wait until URL symbols have been processed
     if (urlSymbols.length > 0 && !urlProcessedRef.current) {
       return;
     }
@@ -249,9 +223,7 @@ export const ComparisonPage: React.FC = () => {
       let hasMetricsError = false;
 
       try {
-        // Fetch both historical data and metrics in parallel
         await Promise.all([
-          // Historical data
           ...stockSymbols.map(async symbol => {
             try {
               const result = await fetchHistoricalPrices({
@@ -271,7 +243,6 @@ export const ComparisonPage: React.FC = () => {
             }
           }),
 
-          // Metrics data
           ...stockSymbols.map(async symbol => {
             try {
               const result = await fetchKeyMetrics(symbol).unwrap();
@@ -318,7 +289,6 @@ export const ComparisonPage: React.FC = () => {
     };
   }, [stockSymbols, fetchHistoricalPrices, fetchKeyMetrics, timeframe, urlSymbols]);
 
-  // Effect to update timeframe
   useEffect(() => {
     if (initialRenderRef.current || stockSymbols.length === 0) return;
 
@@ -384,10 +354,8 @@ export const ComparisonPage: React.FC = () => {
     isFetchingHistory ||
     isFetchingMetrics;
 
-  // Overall error state
   const hasError = quotesError || pricesError || metricsError;
 
-  // No stocks selected
   if (stockSymbols.length === 0) {
     return (
       <Box>

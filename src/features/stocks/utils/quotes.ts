@@ -1,10 +1,5 @@
-// src/features/stocks/utils/quotes.ts
-
 import { StockQuote } from '../models';
 
-/**
- * Transform API response to StockQuote model
- */
 export const transformStockQuotes = (response: any[]): StockQuote[] => {
   if (!Array.isArray(response)) {
     return [];
@@ -24,9 +19,6 @@ export const transformStockQuotes = (response: any[]): StockQuote[] => {
     }));
 };
 
-/**
- * Format price for display
- */
 export const formatPrice = (price: number): string => {
   return price.toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -34,9 +26,6 @@ export const formatPrice = (price: number): string => {
   });
 };
 
-/**
- * Format change amount and percentage for display
- */
 export const formatChange = (change: number, changePercent: number): string => {
   const sign = change >= 0 ? '+' : '';
   return `${sign}${change.toFixed(2)} (${sign}${changePercent.toFixed(2)}%)`;

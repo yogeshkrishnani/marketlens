@@ -24,7 +24,6 @@ import { canUserCreateWatchlist, createWatchlist } from '../services/watchlistSe
 
 import { useAuth } from '@/features/auth/context/AuthContext';
 
-// Component props interface
 interface CreateWatchlistFormProps {
   readonly onSuccess?: (watchlistId: string) => void;
   readonly onCancel?: () => void;
@@ -37,7 +36,6 @@ export const CreateWatchlistForm: React.FC<CreateWatchlistFormProps> = ({
   const navigate = useNavigate();
   const { currentUser } = useAuth();
 
-  // Form state
   const [formData, setFormData] = useState<CreateWatchlistFormData>({
     name: '',
     initialSymbols: '',
@@ -47,18 +45,15 @@ export const CreateWatchlistForm: React.FC<CreateWatchlistFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Validate form data
   const validateForm = useCallback((data: CreateWatchlistFormData): CreateWatchlistFormErrors => {
     const errors: CreateWatchlistFormErrors = {};
 
-    // Name validation
     if (!data.name.trim()) {
       errors.name = 'Watchlist name is required';
     } else if (!isValidWatchlistName(data.name.trim())) {
       errors.name = `Name must be between ${WATCHLIST_CONSTRAINTS.MIN_NAME_LENGTH} and ${WATCHLIST_CONSTRAINTS.MAX_NAME_LENGTH} characters`;
     }
 
-    // Symbols validation (optional)
     if (data.initialSymbols.trim()) {
       const symbols = data.initialSymbols
         .split(',')
@@ -69,13 +64,11 @@ export const CreateWatchlistForm: React.FC<CreateWatchlistFormProps> = ({
         errors.initialSymbols = `Maximum ${WATCHLIST_CONSTRAINTS.MAX_SYMBOLS_PER_WATCHLIST} symbols allowed`;
       }
 
-      // Validate each symbol format
       const invalidSymbols = symbols.filter(symbol => !isValidSymbol(symbol));
       if (invalidSymbols.length > 0) {
         errors.initialSymbols = `Invalid symbols: ${invalidSymbols.join(', ')}. Use 1-5 letters only.`;
       }
 
-      // Check for duplicates
       const uniqueSymbols = new Set(symbols);
       if (uniqueSymbols.size !== symbols.length) {
         errors.initialSymbols = 'Duplicate symbols are not allowed';
@@ -85,7 +78,6 @@ export const CreateWatchlistForm: React.FC<CreateWatchlistFormProps> = ({
     return errors;
   }, []);
 
-  // Parse symbols from input string
   const parseSymbols = useCallback((symbolsString: string): string[] => {
     if (!symbolsString.trim()) return [];
 
@@ -93,18 +85,15 @@ export const CreateWatchlistForm: React.FC<CreateWatchlistFormProps> = ({
       .split(',')
       .map(s => s.trim().toUpperCase())
       .filter(s => s.length > 0 && isValidSymbol(s))
-      .filter((symbol, index, array) => array.indexOf(symbol) === index); // Remove duplicates
+      .filter((symbol, index, array) => array.indexOf(symbol) === index);
   }, []);
 
-  // Handle input changes
   const handleInputChange = useCallback(
     (field: keyof CreateWatchlistFormData) => {
       return (event: React.ChangeEvent<HTMLInputElement>) => {
         let value = event.target.value;
 
-        // Special handling for symbols field
         if (field === 'initialSymbols') {
-          // Allow letters, commas, and spaces only
           value = value.toUpperCase().replace(/[^A-Z,\s]/g, '');
         }
 
@@ -113,7 +102,6 @@ export const CreateWatchlistForm: React.FC<CreateWatchlistFormProps> = ({
           [field]: value,
         }));
 
-        // Clear field error when user starts typing
         if (formErrors[field]) {
           setFormErrors(prev => ({
             ...prev,
@@ -121,7 +109,6 @@ export const CreateWatchlistForm: React.FC<CreateWatchlistFormProps> = ({
           }));
         }
 
-        // Clear global error
         if (error) {
           setError(null);
         }
@@ -130,7 +117,6 @@ export const CreateWatchlistForm: React.FC<CreateWatchlistFormProps> = ({
     [formErrors, error]
   );
 
-  // Handle form submission
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
@@ -140,7 +126,6 @@ export const CreateWatchlistForm: React.FC<CreateWatchlistFormProps> = ({
         return;
       }
 
-      // Validate form
       const errors = validateForm(formData);
       setFormErrors(errors);
 
@@ -152,7 +137,6 @@ export const CreateWatchlistForm: React.FC<CreateWatchlistFormProps> = ({
       setError(null);
 
       try {
-        // Check if user can create more watchlists
         const canCreate = await canUserCreateWatchlist(currentUser.uid);
         if (!canCreate) {
           throw new Error(
@@ -160,19 +144,15 @@ export const CreateWatchlistForm: React.FC<CreateWatchlistFormProps> = ({
           );
         }
 
-        // Parse symbols
         const symbols = parseSymbols(formData.initialSymbols);
 
-        // Create watchlist data
         const watchlistData: CreateWatchlistData = {
           name: formData.name.trim(),
           symbols: symbols.length > 0 ? symbols : undefined,
         };
 
-        // Create watchlist
         const newWatchlist = await createWatchlist(currentUser.uid, watchlistData);
 
-        // Success - call onSuccess or navigate
         if (onSuccess) {
           onSuccess(newWatchlist.id);
         } else {
@@ -188,7 +168,6 @@ export const CreateWatchlistForm: React.FC<CreateWatchlistFormProps> = ({
     [currentUser?.uid, validateForm, formData, parseSymbols, onSuccess, navigate]
   );
 
-  // Handle cancel action
   const handleCancel = useCallback(() => {
     if (onCancel) {
       onCancel();
@@ -197,10 +176,8 @@ export const CreateWatchlistForm: React.FC<CreateWatchlistFormProps> = ({
     }
   }, [onCancel, navigate]);
 
-  // Check if form has changes
   const hasChanges = formData.name.trim() || formData.initialSymbols.trim();
 
-  // Get symbol count for display
   const symbolCount = parseSymbols(formData.initialSymbols).length;
 
   return (

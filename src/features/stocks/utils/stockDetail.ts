@@ -1,5 +1,3 @@
-// src/features/stocks/utils/stockDetail.ts
-
 import {
   CompanyProfile,
   HistoricalPrice,
@@ -7,9 +5,6 @@ import {
   StockDetailQuote,
 } from '../models/stockDetail';
 
-/**
- * Transform API response to StockDetailQuote model
- */
 export const transformStockDetailQuote = (data: any): StockDetailQuote => {
   if (!data || typeof data !== 'object' || !data.symbol) {
     throw new Error('Invalid stock quote data');
@@ -41,9 +36,6 @@ export const transformStockDetailQuote = (data: any): StockDetailQuote => {
   };
 };
 
-/**
- * Transform API response to CompanyProfile model
- */
 export const transformCompanyProfile = (data: any): CompanyProfile => {
   if (!data || typeof data !== 'object' || !data.symbol) {
     throw new Error('Invalid company profile data');
@@ -71,9 +63,6 @@ export const transformCompanyProfile = (data: any): CompanyProfile => {
   };
 };
 
-/**
- * Transform API response to HistoricalPrice model (for daily data)
- */
 export const transformHistoricalPrices = (data: any[]): HistoricalPrice[] => {
   if (!Array.isArray(data)) {
     return [];
@@ -89,12 +78,9 @@ export const transformHistoricalPrices = (data: any[]): HistoricalPrice[] => {
       close: parseFloat(item.close) || 0,
       volume: parseInt(item.volume) || 0,
     }))
-    .sort((a, b) => a.timestamp - b.timestamp); // Sort by date ascending
+    .sort((a, b) => a.timestamp - b.timestamp);
 };
 
-/**
- * Transform API response to HistoricalPrice model (for intraday data)
- */
 export const transformIntradayPrices = (data: any[]): HistoricalPrice[] => {
   if (!Array.isArray(data)) {
     return [];
@@ -110,12 +96,9 @@ export const transformIntradayPrices = (data: any[]): HistoricalPrice[] => {
       close: parseFloat(item.close) || 0,
       volume: parseInt(item.volume) || 0,
     }))
-    .sort((a, b) => a.timestamp - b.timestamp); // Sort by date ascending
+    .sort((a, b) => a.timestamp - b.timestamp);
 };
 
-/**
- * Transform API response to KeyMetrics model
- */
 export const transformKeyMetrics = (data: any): KeyMetrics => {
   if (!data || typeof data !== 'object') {
     throw new Error('Invalid key metrics data');
@@ -147,9 +130,6 @@ export const transformKeyMetrics = (data: any): KeyMetrics => {
   };
 };
 
-/**
- * Format price with custom precision
- */
 export const formatPrice = (price: number, precision: number = 2): string => {
   return price.toLocaleString(undefined, {
     minimumFractionDigits: precision,
@@ -157,9 +137,6 @@ export const formatPrice = (price: number, precision: number = 2): string => {
   });
 };
 
-/**
- * Format number to currency
- */
 export const formatCurrency = (amount: number, currency: string = 'USD'): string => {
   return new Intl.NumberFormat(undefined, {
     style: 'currency',
@@ -168,9 +145,6 @@ export const formatCurrency = (amount: number, currency: string = 'USD'): string
   }).format(amount);
 };
 
-/**
- * Format number to compact format with proper suffix (K, M, B, T)
- */
 export const formatCompactNumber = (num: number): string => {
   if (num === null || num === undefined || isNaN(num)) {
     return 'N/A';
@@ -195,17 +169,11 @@ export const formatCompactNumber = (num: number): string => {
   }
 };
 
-/**
- * Format change value with +/- sign and percentage
- */
 export const formatChange = (change: number, changePercent: number): string => {
   const sign = change >= 0 ? '+' : '';
   return `${sign}${change.toFixed(2)} (${sign}${changePercent.toFixed(2)}%)`;
 };
 
-/**
- * Format date from ISO date string to locale formatted date
- */
 export const formatDate = (dateStr: string | null): string => {
   if (!dateStr) return 'N/A';
 

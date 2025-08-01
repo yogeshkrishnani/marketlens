@@ -1,5 +1,3 @@
-// src/features/stocks/components/StockSearch.tsx
-
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import SearchIcon from '@mui/icons-material/Search';
 import {
@@ -38,60 +36,46 @@ export const StockSearch: React.FC<StockSearchProps> = ({
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
 
-  // Debounce search input to prevent excessive API calls
   const debouncedSearchTerm = useDebounce(inputValue, 300);
 
-  // Use the RTK Query hook to fetch search results
   const {
     data: searchResults,
     isFetching,
     isError,
     error,
   } = useSearchStocksQuery(debouncedSearchTerm, {
-    // Skip the query if the search term is too short
     skip: debouncedSearchTerm.length < 2,
   });
 
-  // Store processed search results that clear when input is empty
   const [processedResults, setProcessedResults] = useState<StockSearchResult[]>([]);
 
-  // Update processed results when API results change or input changes
   useEffect(() => {
-    // If input is empty, clear results
     if (inputValue.trim() === '') {
       setProcessedResults([]);
     }
 
-    // If we have a new search term that doesn't match the debounced term yet,
-    // clear the results until we get fresh data
     else if (debouncedSearchTerm !== inputValue.trim()) {
       setProcessedResults([]);
     }
 
-    // Only update results if they match the current search term
     else if (searchResults && debouncedSearchTerm === inputValue.trim()) {
       setProcessedResults(searchResults);
     }
   }, [searchResults, inputValue, debouncedSearchTerm]);
 
-  // Handle selection of a stock
   const handleStockSelection = (_: React.SyntheticEvent, stock: StockSearchResult | null) => {
     if (stock) {
-      console.log('Selected stock:', stock); // Add console log for debugging
+      console.log('Selected stock:', stock);
       navigate(`/stocks/${stock.symbol}`);
     }
   };
 
-  // Error message for API failures
   const getErrorMessage = () => {
     if (isError && error) {
-      // Type guards for different error types
       if (typeof error === 'object' && error !== null) {
         if ('status' in error) {
-          // It's a FetchBaseQueryError
           return `Error ${error.status}: Please try again later.`;
         } else if ('message' in error) {
-          // It has a message property
           return (error as any).message;
         }
       }

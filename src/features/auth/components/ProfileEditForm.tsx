@@ -1,4 +1,3 @@
-// src/features/auth/components/ProfileEditForm.tsx
 import CancelIcon from '@mui/icons-material/Cancel';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import SaveIcon from '@mui/icons-material/Save';
@@ -36,19 +35,16 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ onCancel, onSu
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  // Initialize form with current user data
   useEffect(() => {
     if (currentUser) {
       setDisplayName(currentUser.displayName || '');
     }
   }, [currentUser]);
 
-  // Handle profile image selection
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
 
-      // Check file size (limit to 2MB)
       if (file.size > 2 * 1024 * 1024) {
         setError('Image size should be less than 2MB');
         return;
@@ -56,7 +52,6 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ onCancel, onSu
 
       setProfileImage(file);
 
-      // Create preview
       const reader = new FileReader();
       reader.onload = () => {
         setImagePreview(reader.result as string);
@@ -65,7 +60,6 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ onCancel, onSu
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -74,7 +68,6 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ onCancel, onSu
       return;
     }
 
-    // Validate form
     if (!displayName.trim()) {
       setError('Display name cannot be empty');
       return;
@@ -86,14 +79,12 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ onCancel, onSu
 
       let photoURL = currentUser.photoURL;
 
-      // Upload image if a new one was selected
       if (profileImage) {
         const storageRef = ref(storage, `profile_images/${currentUser.uid}`);
         await uploadBytes(storageRef, profileImage);
         photoURL = await getDownloadURL(storageRef);
       }
 
-      // Update profile
       await updateProfile(currentUser, {
         displayName: displayName.trim(),
         photoURL,

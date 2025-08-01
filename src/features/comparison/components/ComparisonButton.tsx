@@ -29,10 +29,8 @@ export const ComparisonButton: React.FC<ComparisonButtonProps> = ({
     }
   };
 
-  // Button is disabled if we're at max capacity and trying to add a new stock
   const isDisabled = !inComparison && comparisonList.length >= 4;
 
-  // Tooltip message based on state
   const getTooltipMessage = () => {
     if (inComparison) {
       return `Remove ${symbol} from comparison`;

@@ -35,3 +35,5 @@ tsconfig.tsbuildinfo
 
 # Firebase CLI cache
 .firebase/
+cursor_context_doc.md
+REFACTORING_TODO.md

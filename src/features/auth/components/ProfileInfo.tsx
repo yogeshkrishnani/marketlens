@@ -1,4 +1,3 @@
-// src/features/auth/components/ProfileInfo.tsx
 import { Box, Divider, Grid, Typography } from '@mui/material';
 import React from 'react';
 

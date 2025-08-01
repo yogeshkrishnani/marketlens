@@ -1,4 +1,3 @@
-// Timeframe options for historical price data
 export type Timeframe = '1D' | '5D' | '1M' | '3M' | '1Y' | '5Y';
 
 // Detailed stock quote information

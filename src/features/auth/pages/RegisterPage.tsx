@@ -1,4 +1,4 @@
-// src/features/auth/pages/RegisterPage.tsx
+
 import GoogleIcon from '@mui/icons-material/Google';
 import {
   Alert,
@@ -57,7 +57,6 @@ export const RegisterPage: React.FC = () => {
       setLoading(true);
       await signUp(email, password, name);
       setSuccess(true);
-      // Navigate to login after 2 seconds
       setTimeout(() => {
         navigate('/login');
       }, 2000);

@@ -23,12 +23,9 @@ import {
 
 import { db } from '@/services/firebase/config';
 
-// Collection name
 const PORTFOLIOS_COLLECTION = 'portfolios';
 
-// Helper function to generate unique position ID
 const generatePositionId = (): string => {
-  // Use crypto.randomUUID() if available (HTTPS/secure context)
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     try {
       return crypto.randomUUID();
@@ -37,7 +34,6 @@ const generatePositionId = (): string => {
     }
   }
 
-  // Fallback: Generate RFC4122-like UUID manually
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = (Math.random() * 16) | 0;
     const v = c === 'x' ? r : (r & 0x3) | 0x8;
@@ -45,7 +41,6 @@ const generatePositionId = (): string => {
   });
 };
 
-// Helper function to transform Position to Firestore document
 const positionToFirestore = (position: Position) => {
   return {
     id: position.id,
@@ -57,7 +52,6 @@ const positionToFirestore = (position: Position) => {
   };
 };
 
-// Helper function to transform Firestore document to Position
 const firestoreToPosition = (firestorePosition: any): Position => {
   return {
     id: firestorePosition.id,
@@ -69,7 +63,6 @@ const firestoreToPosition = (firestorePosition: any): Position => {
   };
 };
 
-// Helper function to transform portfolio data from Firestore
 const transformPortfolioFromFirestore = (doc: any, docId: string): Portfolio => {
   const data = doc.data ? doc.data() : doc;
 
@@ -84,9 +77,6 @@ const transformPortfolioFromFirestore = (doc: any, docId: string): Portfolio => 
   };
 };
 
-/**
- * Create a new portfolio for the current user
- */
 export const addPortfolio = async (
   userId: string,
   portfolioData: CreatePortfolioData
@@ -97,14 +87,13 @@ export const addPortfolio = async (
     const portfolioToCreate = {
       ...portfolioData,
       userId,
-      positions: [], // Initialize with empty positions array
+      positions: [],
       createdAt: Timestamp.fromDate(now),
       updatedAt: Timestamp.fromDate(now),
     };
 
     const portfolioRef = await addDoc(collection(db, PORTFOLIOS_COLLECTION), portfolioToCreate);
 
-    // Return the created portfolio with the generated ID
     return {
       id: portfolioRef.id,
       name: portfolioData.name,
@@ -120,9 +109,6 @@ export const addPortfolio = async (
   }
 };
 
-/**
- * Get all portfolios for a specific user
- */
 export const getUserPortfolios = async (userId: string): Promise<Portfolio[]> => {
   try {
     const q = query(
@@ -140,9 +126,6 @@ export const getUserPortfolios = async (userId: string): Promise<Portfolio[]> =>
   }
 };
 
-/**
- * Get a single portfolio by ID
- */
 export const getPortfolioById = async (portfolioId: string): Promise<Portfolio | null> => {
   try {
     const portfolioRef = doc(db, PORTFOLIOS_COLLECTION, portfolioId);
@@ -159,9 +142,6 @@ export const getPortfolioById = async (portfolioId: string): Promise<Portfolio |
   }
 };
 
-/**
- * Update an existing portfolio
- */
 export const updatePortfolio = async (
   portfolioId: string,
   updateData: UpdatePortfolioData
@@ -181,9 +161,6 @@ export const updatePortfolio = async (
   }
 };
 
-/**
- * Delete a portfolio
- */
 export const deletePortfolio = async (portfolioId: string): Promise<void> => {
   try {
     const portfolioRef = doc(db, PORTFOLIOS_COLLECTION, portfolioId);
@@ -194,9 +171,6 @@ export const deletePortfolio = async (portfolioId: string): Promise<void> => {
   }
 };
 
-/**
- * Check if user owns a portfolio
- */
 export const verifyPortfolioOwnership = async (
   portfolioId: string,
   userId: string
@@ -228,7 +202,6 @@ export const addPositionToPortfolio = async (
       throw new Error('Portfolio not found');
     }
 
-    // Create new position with unique ID
     const newPosition: Position = {
       id: generatePositionId(),
       symbol: positionData.symbol.toUpperCase(),
@@ -238,10 +211,8 @@ export const addPositionToPortfolio = async (
       notes: positionData.notes,
     };
 
-    // Add position to portfolio's positions array
     const updatedPositions = [...portfolio.positions, newPosition];
 
-    // Update portfolio in Firestore
     const portfolioRef = doc(db, PORTFOLIOS_COLLECTION, portfolioId);
     await updateDoc(portfolioRef, {
       positions: updatedPositions.map(positionToFirestore),
@@ -255,22 +226,17 @@ export const addPositionToPortfolio = async (
   }
 };
 
-/**
- * Update an existing position in a portfolio
- */
 export const updatePositionInPortfolio = async (
   portfolioId: string,
   positionId: string,
   updateData: UpdatePositionData
 ): Promise<void> => {
   try {
-    // Get current portfolio
     const portfolio = await getPortfolioById(portfolioId);
     if (!portfolio) {
       throw new Error('Portfolio not found');
     }
 
-    // Find and update the position
     const updatedPositions = portfolio.positions.map(position => {
       if (position.id === positionId) {
         return {
@@ -281,13 +247,11 @@ export const updatePositionInPortfolio = async (
       return position;
     });
 
-    // Check if position was found
     const positionExists = portfolio.positions.some(p => p.id === positionId);
     if (!positionExists) {
       throw new Error('Position not found');
     }
 
-    // Update portfolio in Firestore
     const portfolioRef = doc(db, PORTFOLIOS_COLLECTION, portfolioId);
     await updateDoc(portfolioRef, {
       positions: updatedPositions.map(positionToFirestore),
@@ -299,29 +263,22 @@ export const updatePositionInPortfolio = async (
   }
 };
 
-/**
- * Remove a position from a portfolio
- */
 export const removePositionFromPortfolio = async (
   portfolioId: string,
   positionId: string
 ): Promise<void> => {
   try {
-    // Get current portfolio
     const portfolio = await getPortfolioById(portfolioId);
     if (!portfolio) {
       throw new Error('Portfolio not found');
     }
 
-    // Remove position from array
     const updatedPositions = portfolio.positions.filter(position => position.id !== positionId);
 
-    // Check if position was found and removed
     if (updatedPositions.length === portfolio.positions.length) {
       throw new Error('Position not found');
     }
 
-    // Update portfolio in Firestore
     const portfolioRef = doc(db, PORTFOLIOS_COLLECTION, portfolioId);
     await updateDoc(portfolioRef, {
       positions: updatedPositions.map(positionToFirestore),
@@ -333,9 +290,6 @@ export const removePositionFromPortfolio = async (
   }
 };
 
-/**
- * Get all unique symbols from a portfolio's positions
- */
 export const getPortfolioSymbols = async (portfolioId: string): Promise<string[]> => {
   try {
     const portfolio = await getPortfolioById(portfolioId);
@@ -344,7 +298,7 @@ export const getPortfolioSymbols = async (portfolioId: string): Promise<string[]
     }
 
     const symbols = portfolio.positions.map(position => position.symbol);
-    return [...new Set(symbols)]; // Remove duplicates
+    return [...new Set(symbols)];
   } catch (error) {
     console.error('Error getting portfolio symbols:', error);
     return [];

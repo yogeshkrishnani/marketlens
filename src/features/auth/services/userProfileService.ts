@@ -1,4 +1,3 @@
-// src/features/auth/services/userProfileService.ts
 import { User } from 'firebase/auth';
 import {
   doc,
@@ -12,37 +11,30 @@ import {
 
 import { db } from '@/services/firebase/config';
 
-// User profile interface
 export interface UserProfile {
   uid: string;
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
   emailVerified: boolean;
-  createdAt?: any; // Firestore timestamp
-  updatedAt?: any; // Firestore timestamp
+  createdAt?: any;
+  updatedAt?: any;
   settings?: {
-    // Theme preferences
     themeSyncWithSystem: boolean;
-
-    // Data display preferences
     defaultChartPeriod: string;
     defaultDataRefreshInterval: number;
     showAdvancedMetrics: boolean;
-
-    // Notification preferences
     emailNotifications: boolean;
     priceAlerts: boolean;
     newsAlerts: boolean;
   };
-  lastLogin?: any; // Firestore timestamp
+  lastLogin?: any;
 }
 
-// Default user settings
 export const defaultUserSettings = {
   themeSyncWithSystem: true,
   defaultChartPeriod: '1M',
-  defaultDataRefreshInterval: 60, // seconds
+  defaultDataRefreshInterval: 60,
   showAdvancedMetrics: false,
   emailNotifications: true,
   priceAlerts: false,
@@ -56,11 +48,9 @@ export const createUserProfile = async (user: User): Promise<void> => {
   const userRef = doc(db, 'users', user.uid);
 
   try {
-    // Check if the user document already exists
     const userDoc = await getDoc(userRef);
 
     if (userDoc.exists()) {
-      // Update the existing user document
       await updateDoc(userRef, {
         displayName: user.displayName,
         email: user.email,
@@ -70,7 +60,6 @@ export const createUserProfile = async (user: User): Promise<void> => {
         updatedAt: serverTimestamp(),
       });
     } else {
-      // Create a new user document
       await setDoc(userRef, {
         uid: user.uid,
         displayName: user.displayName,
@@ -118,7 +107,6 @@ export const updateUserProfileData = async (
   try {
     const userRef = doc(db, 'users', userId);
 
-    // Add updatedAt timestamp
     const updateData = {
       ...data,
       updatedAt: serverTimestamp(),
@@ -141,7 +129,6 @@ export const updateUserSettings = async (
   try {
     const userRef = doc(db, 'users', userId);
 
-    // Get current settings first
     const userDoc = await getDoc(userRef);
     if (!userDoc.exists()) {
       throw new Error('User profile not found');
@@ -150,13 +137,11 @@ export const updateUserSettings = async (
     const userData = userDoc.data() as UserProfile;
     const currentSettings = userData.settings || defaultUserSettings;
 
-    // Merge current settings with new settings
     const updatedSettings = {
       ...currentSettings,
       ...settings,
     };
 
-    // Update settings in Firestore
     await updateDoc(userRef, {
       settings: updatedSettings,
       updatedAt: serverTimestamp(),

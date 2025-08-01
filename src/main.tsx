@@ -8,7 +8,6 @@ import { store } from '@/store';
 
 import '@services/firebase/config';
 
-// Validate environment variables during initialization
 validateEnvironmentVariables();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

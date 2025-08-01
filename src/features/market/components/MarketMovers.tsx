@@ -13,7 +13,6 @@ export const MarketMovers = () => {
     setTab(newValue);
   };
 
-  // Format price for display
   const formatPrice = (price: number) => {
     return price.toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -21,7 +20,6 @@ export const MarketMovers = () => {
     });
   };
 
-  // Format change for display
   const formatChange = (change: number, changePercent: number) => {
     const sign = change >= 0 ? '+' : '';
     return `${sign}${change.toFixed(2)} (${sign}${changePercent.toFixed(2)}%)`;
@@ -85,7 +83,6 @@ export const MarketMovers = () => {
                       },
                     }}
                   >
-                    {/* Stock Symbol & Name */}
                     <Box>
                       <Typography variant="body2" fontWeight={600}>
                         {stock.symbol}
@@ -95,7 +92,6 @@ export const MarketMovers = () => {
                       </Typography>
                     </Box>
 
-                    {/* Price & Change */}
                     <Box sx={{ textAlign: 'right' }}>
                       <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.25 }}>
                         {formatPrice(stock.price)}
@@ -133,7 +129,6 @@ export const MarketMovers = () => {
                       },
                     }}
                   >
-                    {/* Stock Symbol & Name */}
                     <Box>
                       <Typography variant="body2" fontWeight={600}>
                         {stock.symbol}
@@ -143,7 +138,6 @@ export const MarketMovers = () => {
                       </Typography>
                     </Box>
 
-                    {/* Price & Change */}
                     <Box sx={{ textAlign: 'right' }}>
                       <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.25 }}>
                         {formatPrice(stock.price)}

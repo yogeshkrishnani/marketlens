@@ -23,7 +23,6 @@ interface ComparisonMetricsTableProps {
   metrics: { [symbol: string]: KeyMetrics };
 }
 
-// Define metric groups and their descriptions
 interface MetricDefinition {
   key: string;
   label: string;
@@ -159,7 +158,6 @@ export const ComparisonMetricsTable: React.FC<ComparisonMetricsTableProps> = ({
   quotes,
   metrics,
 }) => {
-  // Format metric value based on its type
   const formatMetricValue = (
     value: number | null,
     isPercentage?: boolean,
@@ -187,7 +185,6 @@ export const ComparisonMetricsTable: React.FC<ComparisonMetricsTableProps> = ({
     return value.toFixed(2);
   };
 
-  // Get metric value from either quote or metrics object
   const getMetricValue = (symbol: string, key: string, isQuote?: boolean) => {
     if (isQuote) {
       const quote = quotes.find(q => q.symbol === symbol);
@@ -198,7 +195,6 @@ export const ComparisonMetricsTable: React.FC<ComparisonMetricsTableProps> = ({
     }
   };
 
-  // Find the best and worst values for a metric
   const findBestWorst = (metricKey: string, isQuote?: boolean, isGoodLow?: boolean) => {
     const values = stocks
       .map(stock => ({
@@ -209,7 +205,6 @@ export const ComparisonMetricsTable: React.FC<ComparisonMetricsTableProps> = ({
 
     if (values.length === 0) return { best: null, worst: null };
 
-    // Sort based on what's considered "good"
     values.sort((a, b) => {
       if (isGoodLow) {
         return Number(a.value) - Number(b.value);
@@ -244,15 +239,14 @@ export const ComparisonMetricsTable: React.FC<ComparisonMetricsTableProps> = ({
                   {stocks.map(stock => (
                     <TableCell
                       key={stock.symbol}
-                      align="center" // Center alignment for headers
+                      align="center"
                       sx={{
                         fontWeight: 600,
-                        width: `${75 / stocks.length}%`, // Divide remaining space equally
+                        width: `${75 / stocks.length}%`,
                         borderLeft: `4px solid ${stock.color}`,
                         py: 2,
                       }}
                     >
-                      {/* Add color indicator */}
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Box
                           sx={{
@@ -301,7 +295,7 @@ export const ComparisonMetricsTable: React.FC<ComparisonMetricsTableProps> = ({
                         return (
                           <TableCell
                             key={`${stock.symbol}-${metric.key}`}
-                            align="center" // Center alignment for values
+                            align="center"
                             sx={{
                               ...(isBest && { color: 'success.main', fontWeight: 600 }),
                               ...(isWorst && { color: 'error.main', fontWeight: 600 }),

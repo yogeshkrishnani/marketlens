@@ -1,4 +1,3 @@
-// src/features/auth/components/AccountSettings.tsx
 import { useUser } from '@features/auth/context/UserContext';
 import {
   defaultUserSettings,
@@ -30,27 +29,20 @@ import { useAuth } from '../context/AuthContext';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { db } from '@/services/firebase/config';
 
-// Define user settings interface
 interface UserSettings {
-  // Theme preferences
   themeSyncWithSystem: boolean;
-
-  // Data display preferences
   defaultChartPeriod: string;
   defaultDataRefreshInterval: number;
   showAdvancedMetrics: boolean;
-
-  // Notification preferences
   emailNotifications: boolean;
   priceAlerts: boolean;
   newsAlerts: boolean;
 }
 
-// Default settings
 const defaultSettings: UserSettings = {
   themeSyncWithSystem: true,
   defaultChartPeriod: '1M',
-  defaultDataRefreshInterval: 60, // seconds
+  defaultDataRefreshInterval: 60,
   showAdvancedMetrics: false,
   emailNotifications: true,
   priceAlerts: false,
@@ -75,7 +67,6 @@ export const AccountSettings: React.FC = () => {
     }
   }, [userProfile]);
 
-  // Load user settings from Firestore
   useEffect(() => {
     const loadSettings = async () => {
       if (!currentUser) return;
@@ -87,8 +78,8 @@ export const AccountSettings: React.FC = () => {
 
         if (docSnap.exists() && docSnap.data().settings) {
           setSettings({
-            ...defaultSettings, // Include defaults for any missing fields
-            ...docSnap.data().settings, // Override with user's saved settings
+            ...defaultSettings,
+            ...docSnap.data().settings,
           });
         }
       } catch (err) {
@@ -101,7 +92,6 @@ export const AccountSettings: React.FC = () => {
     loadSettings();
   }, [currentUser]);
 
-  // Save settings to Firestore
   const saveSettings = async () => {
     if (!currentUser) return;
 
@@ -109,15 +99,12 @@ export const AccountSettings: React.FC = () => {
       setSaving(true);
       setError('');
 
-      // Update user settings in Firestore
       await updateUserSettings(currentUser.uid, settings);
 
-      // Refresh user profile to get the latest data
       await refreshUserProfile();
 
       setSuccess(true);
 
-      // Reset success message after 3 seconds
       setTimeout(() => {
         setSuccess(false);
       }, 3000);
@@ -129,18 +116,14 @@ export const AccountSettings: React.FC = () => {
     }
   };
 
-  // Handle settings changes
   const handleChange = (key: keyof UserSettings, value: any) => {
     setSettings(prev => ({
       ...prev,
       [key]: value,
     }));
 
-    // For theme sync option, also update theme immediately
     if (key === 'themeSyncWithSystem' && value === false) {
-      // If turning off system sync, set theme based on current mode
     } else if (key === 'themeSyncWithSystem' && value === true) {
-      // If turning on system sync, update theme based on system preference
       const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
       if ((prefersDarkMode && mode === 'light') || (!prefersDarkMode && mode === 'dark')) {
         dispatch(toggleTheme());
@@ -148,7 +131,6 @@ export const AccountSettings: React.FC = () => {
     }
   };
 
-  // Handle theme toggle
   const handleThemeToggle = () => {
     dispatch(toggleTheme());
   };

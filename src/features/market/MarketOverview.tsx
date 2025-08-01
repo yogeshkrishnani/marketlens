@@ -11,17 +11,14 @@ export const MarketOverview = () => {
       <MarketOverviewHeader />
 
       <Grid container spacing={3}>
-        {/* Market Indices Component */}
         <Grid item xs={12} md={6} lg={4}>
           <MarketIndices />
         </Grid>
 
-        {/* Sector Performance Component */}
         <Grid item xs={12} md={6} lg={4}>
           <SectorPerformance />
         </Grid>
 
-        {/* Market Movers Component */}
         <Grid item xs={12} md={6} lg={4}>
           <MarketMovers />
         </Grid>

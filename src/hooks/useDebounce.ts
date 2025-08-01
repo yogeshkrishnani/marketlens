@@ -10,12 +10,10 @@ export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
-    // Set debouncedValue to value (passed in) after the specified delay
     const handler = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
 
-    // If the value changes (or the hook is unmounted), clear the timeout
     return () => {
       clearTimeout(handler);
     };

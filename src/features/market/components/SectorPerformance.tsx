@@ -14,7 +14,6 @@ export const SectorPerformance = () => {
   const [hasScrollContent, setHasScrollContent] = useState(false);
   const scrollBoxRef = useRef<HTMLDivElement>(null);
 
-  // Check if content is scrollable and show indicator
   useEffect(() => {
     const checkScrollability = () => {
       if (scrollBoxRef.current) {
@@ -22,10 +21,8 @@ export const SectorPerformance = () => {
         setHasScrollContent(hasOverflow);
 
         if (hasOverflow) {
-          // Show scroll indicator after data loads
           setShowScrollIndicator(true);
 
-          // Hide indicator after delay or when scrolled
           const timer = setTimeout(() => {
             setShowScrollIndicator(false);
           }, 3000);
@@ -35,13 +32,11 @@ export const SectorPerformance = () => {
       }
     };
 
-    // Check after data loads
     if (sectors && !isLoading) {
       checkScrollability();
     }
   }, [sectors, isLoading]);
 
-  // Add scroll event listener to hide indicator when user scrolls
   useEffect(() => {
     const scrollBox = scrollBoxRef.current;
 
@@ -55,25 +50,20 @@ export const SectorPerformance = () => {
     }
   }, []);
 
-  // Helper function to get color based on performance with intensity scaling
   const getHeatMapColor = (performance: number) => {
-    // Define max performance for color intensity scaling
-    const maxPerformance = 2.0; // Adjust based on typical range
+    const maxPerformance = 2.0;
 
-    // Calculate intensity (0-1) capped at maxPerformance
     const intensity = Math.min(Math.abs(performance) / maxPerformance, 1);
 
     if (performance > 0) {
-      // Positive: scale from light green to deep green
-      const r = Math.round(233 - intensity * 148); // 233 -> 85
-      const g = Math.round(250 - intensity * 70); // 250 -> 180
-      const b = Math.round(233 - intensity * 148); // 233 -> 85
+      const r = Math.round(233 - intensity * 148);
+      const g = Math.round(250 - intensity * 70);
+      const b = Math.round(233 - intensity * 148);
       return `rgb(${r}, ${g}, ${b})`;
     } else {
-      // Negative: scale from light red to deep red
-      const r = Math.round(250 - intensity * 30); // 250 -> 220
-      const g = Math.round(233 - intensity * 163); // 233 -> 70
-      const b = Math.round(233 - intensity * 163); // 233 -> 70
+      const r = Math.round(250 - intensity * 30);
+      const g = Math.round(233 - intensity * 163);
+      const b = Math.round(233 - intensity * 163);
       return `rgb(${r}, ${g}, ${b})`;
     }
   };

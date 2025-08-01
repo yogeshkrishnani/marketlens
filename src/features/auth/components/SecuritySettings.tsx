@@ -1,4 +1,3 @@
-// src/features/auth/components/SecuritySettings.tsx
 import { Alert, Box, Button, Chip, CircularProgress, Divider, Typography } from '@mui/material';
 import { sendEmailVerification } from 'firebase/auth';
 import React, { useState } from 'react';
@@ -11,12 +10,10 @@ export const SecuritySettings: React.FC = () => {
   const { currentUser } = useAuth();
   const [showPasswordForm, setShowPasswordForm] = useState(false);
 
-  // State variables for email verification
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [verificationSuccess, setVerificationSuccess] = useState(false);
   const [verificationError, setVerificationError] = useState('');
 
-  // Handle sending verification email
   const handleSendVerification = async () => {
     if (!currentUser) return;
 
@@ -27,12 +24,10 @@ export const SecuritySettings: React.FC = () => {
       await sendEmailVerification(currentUser);
 
       setVerificationSuccess(true);
-      // Reset success message after 5 seconds
       setTimeout(() => {
         setVerificationSuccess(false);
       }, 5000);
     } catch (err: any) {
-      // Handle specific error cases
       if (err.code === 'auth/too-many-requests') {
         setVerificationError('Too many requests. Please try again later.');
       } else {
@@ -44,12 +39,10 @@ export const SecuritySettings: React.FC = () => {
     }
   };
 
-  // Function to refresh user data (to check if email has been verified)
   const refreshUserData = async () => {
     if (currentUser) {
       try {
         await currentUser.reload();
-        // Force component re-render to reflect updated email verification status
         setVerificationSuccess(false);
       } catch (err) {
         console.error('Error refreshing user data:', err);
